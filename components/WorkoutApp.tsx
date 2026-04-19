@@ -75,6 +75,7 @@ export default function WorkoutApp() {
   const [history, setHistory] = useState<Workout[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeWorkout, setActiveWorkout] = useState<Workout | null>(null);
+  const [isWorkoutOpen, setIsWorkoutOpen] = useState(false);
   const [viewingWorkout, setViewingWorkout] = useState<Workout | null>(null);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('');
   const [toast, setToast] = useState('');
@@ -200,6 +201,7 @@ export default function WorkoutApp() {
     };
 
     setActiveWorkout(newWorkout);
+    setIsWorkoutOpen(true);
   };
 
   const finishWorkout = async (workout: Workout) => {
@@ -221,17 +223,32 @@ export default function WorkoutApp() {
     }
 
     setActiveWorkout(null);
+    setIsWorkoutOpen(false);
     setTab('history');
   };
 
-  const cancelWorkout = async () => {
-    try {
-      await clearActive();
-    } catch {
-      showToast('Активная тренировка удалена локально');
+  const pauseWorkout = async () => {
+    if (!activeWorkout) {
+      setIsWorkoutOpen(false);
+      return;
     }
-    removeJson(ACTIVE_CACHE_KEY);
-    setActiveWorkout(null);
+
+    writeJson(ACTIVE_CACHE_KEY, activeWorkout);
+    setIsWorkoutOpen(false);
+    setTab('home');
+    showToast('Тренировка сохранена, можно продолжить позже');
+
+    try {
+      await saveActive(activeWorkout);
+    } catch {
+      setSaveStatus('error');
+    }
+  };
+
+  const continueWorkout = () => {
+    if (!activeWorkout) return;
+    setViewingWorkout(null);
+    setIsWorkoutOpen(true);
   };
 
   const deleteWorkout = async (id: string) => {
@@ -258,14 +275,14 @@ export default function WorkoutApp() {
     );
   }
 
-  if (activeWorkout) {
+  if (activeWorkout && isWorkoutOpen) {
     return (
       <>
         <ActiveWorkout
           workout={activeWorkout}
           setWorkout={setActiveWorkout}
           onFinish={finishWorkout}
-          onCancel={cancelWorkout}
+          onPause={pauseWorkout}
           history={history}
           saveStatus={saveStatus}
         />
@@ -296,7 +313,15 @@ export default function WorkoutApp() {
       }}
     >
       <div className="mx-auto max-w-md">
-        {tab === 'home' ? <HomeTab history={history} onStart={startNewWorkout} onView={setViewingWorkout} /> : null}
+        {tab === 'home' ? (
+          <HomeTab
+            history={history}
+            activeWorkout={activeWorkout}
+            onStart={startNewWorkout}
+            onContinue={continueWorkout}
+            onView={setViewingWorkout}
+          />
+        ) : null}
         {tab === 'history' ? <HistoryTab history={history} onView={setViewingWorkout} /> : null}
         {tab === 'progress' ? <ProgressTab history={history} /> : null}
       </div>

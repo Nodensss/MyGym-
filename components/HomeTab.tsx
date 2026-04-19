@@ -1,6 +1,6 @@
 'use client';
 
-import { AlertTriangle, ChevronRight, Dumbbell, TrendingUp } from 'lucide-react';
+import { AlertTriangle, ChevronRight, Dumbbell, Play, TrendingUp } from 'lucide-react';
 import { formatDate } from '@/lib/format';
 import { DEFAULT_PROGRAM } from '@/lib/program';
 import { getRecommendations } from '@/lib/recommendations';
@@ -8,7 +8,9 @@ import type { Workout } from '@/lib/types';
 
 interface HomeTabProps {
   history: Workout[];
+  activeWorkout: Workout | null;
   onStart: () => void;
+  onContinue: () => void;
   onView: (workout: Workout) => void;
 }
 
@@ -20,7 +22,7 @@ function dayLabel(days: number) {
   return 'дней';
 }
 
-export default function HomeTab({ history, onStart, onView }: HomeTabProps) {
+export default function HomeTab({ history, activeWorkout, onStart, onContinue, onView }: HomeTabProps) {
   const last = history[history.length - 1];
   const lastDate = last ? new Date(`${last.date}T00:00:00`) : null;
   const today = new Date();
@@ -67,14 +69,39 @@ export default function HomeTab({ history, onStart, onView }: HomeTabProps) {
         ) : null}
       </div>
 
-      <button
-        type="button"
-        onClick={onStart}
-        className="mb-5 flex w-full items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-orange-500 to-orange-600 p-5 shadow-lg shadow-orange-500/20 transition-all hover:from-orange-400 hover:to-orange-500"
-      >
-        <Dumbbell size={24} />
-        <span className="text-lg font-black uppercase tracking-wider">Начать тренировку</span>
-      </button>
+      {activeWorkout ? (
+        <div className="mb-5 rounded-2xl border border-orange-500/40 bg-orange-500/10 p-4 shadow-lg shadow-orange-500/10">
+          <div className="mb-3 flex items-start justify-between gap-3">
+            <div>
+              <div className="mb-1 text-[10px] font-bold uppercase tracking-widest text-orange-300">Активная тренировка</div>
+              <div className="text-sm font-bold text-slate-100">{activeWorkout.label}</div>
+              <div className="mt-1 text-xs text-slate-400">
+                Разминка: {activeWorkout.warmup.time} мин · {activeWorkout.warmup.distance} км
+              </div>
+            </div>
+            <div className="rounded-lg border border-slate-700 bg-slate-950 px-2 py-1 text-xs font-bold text-slate-300">
+              {(activeWorkout.currentEx ?? 0) + 1} / {DEFAULT_PROGRAM.exercises.length}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onContinue}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-orange-500 p-3 text-sm font-black uppercase tracking-wider text-black transition-all hover:bg-orange-400"
+          >
+            <Play size={16} fill="currentColor" />
+            Продолжить тренировку
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={onStart}
+          className="mb-5 flex w-full items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-orange-500 to-orange-600 p-5 shadow-lg shadow-orange-500/20 transition-all hover:from-orange-400 hover:to-orange-500"
+        >
+          <Dumbbell size={24} />
+          <span className="text-lg font-black uppercase tracking-wider">Начать тренировку</span>
+        </button>
+      )}
 
       {recommendations.length > 0 ? (
         <div className="mb-4 rounded-2xl border border-slate-800 bg-slate-900/60 p-4">

@@ -10,7 +10,7 @@ interface ActiveWorkoutProps {
   workout: Workout;
   setWorkout: (workout: Workout) => void;
   onFinish: (workout: Workout) => void;
-  onCancel: () => void;
+  onPause: () => void;
   history: Workout[];
   saveStatus: '' | 'saved' | 'error';
 }
@@ -23,7 +23,7 @@ export default function ActiveWorkout({
   workout,
   setWorkout,
   onFinish,
-  onCancel,
+  onPause,
   history,
   saveStatus
 }: ActiveWorkoutProps) {
@@ -72,8 +72,8 @@ export default function ActiveWorkout({
                 </button>
                 <button
                   type="button"
-                  onClick={onCancel}
-                  className="rounded border border-red-500/40 bg-red-500/20 px-2 py-1 text-xs text-red-400"
+                  onClick={onPause}
+                  className="rounded border border-orange-500/40 bg-orange-500/20 px-2 py-1 text-xs text-orange-300"
                 >
                   Выйти
                 </button>
