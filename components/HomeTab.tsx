@@ -1,6 +1,7 @@
 'use client';
 
-import { Activity, AlertTriangle, ChevronRight, Dumbbell, Play, TrendingUp } from 'lucide-react';
+import { useState } from 'react';
+import { Activity, AlertTriangle, ChevronRight, Dumbbell, Play, TrendingUp, X } from 'lucide-react';
 import { formatDate } from '@/lib/format';
 import { DEFAULT_PROGRAM, getProgramByKind } from '@/lib/program';
 import { getRecommendations } from '@/lib/recommendations';
@@ -23,6 +24,7 @@ function dayLabel(days: number) {
 }
 
 export default function HomeTab({ history, activeWorkout, onStart, onContinue, onView }: HomeTabProps) {
+  const [pendingStart, setPendingStart] = useState<WorkoutKind | null>(null);
   const last = history[history.length - 1];
   const lastDate = last ? new Date(`${last.date}T00:00:00`) : null;
   const today = new Date();
@@ -30,6 +32,21 @@ export default function HomeTab({ history, activeWorkout, onStart, onContinue, o
   const nextNum = Math.max(0, ...history.map((workout) => workout.number ?? 0)) + 1;
   const recommendations = getRecommendations(history);
   const activeProgram = getProgramByKind(activeWorkout?.kind);
+
+  const requestStart = (kind: WorkoutKind) => {
+    if (activeWorkout) {
+      setPendingStart(kind);
+      return;
+    }
+
+    onStart(kind);
+  };
+
+  const confirmStart = () => {
+    if (!pendingStart) return;
+    onStart(pendingStart);
+    setPendingStart(null);
+  };
 
   return (
     <div className="p-4">
@@ -71,7 +88,7 @@ export default function HomeTab({ history, activeWorkout, onStart, onContinue, o
       </div>
 
       {activeWorkout ? (
-        <div className="mb-5 rounded-2xl border border-orange-500/40 bg-orange-500/10 p-4 shadow-lg shadow-orange-500/10">
+        <div className="mb-3 rounded-2xl border border-orange-500/40 bg-orange-500/10 p-4 shadow-lg shadow-orange-500/10">
           <div className="mb-3 flex items-start justify-between gap-3">
             <div>
               <div className="mb-1 text-[10px] font-bold uppercase tracking-widest text-orange-300">Активная тренировка</div>
@@ -93,26 +110,59 @@ export default function HomeTab({ history, activeWorkout, onStart, onContinue, o
             Продолжить тренировку
           </button>
         </div>
-      ) : (
-        <div className="mb-5 space-y-2">
-          <button
-            type="button"
-            onClick={() => onStart('gym')}
-            className="flex w-full items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-orange-500 to-orange-600 p-5 shadow-lg shadow-orange-500/20 transition-all hover:from-orange-400 hover:to-orange-500"
-          >
-            <Dumbbell size={24} />
-            <span className="text-lg font-black uppercase tracking-wider">Начать зал</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => onStart('bodyweight')}
-            className="flex w-full items-center justify-center gap-3 rounded-2xl border border-green-500/40 bg-green-500/10 p-4 text-green-300 transition-all hover:bg-green-500/20"
-          >
-            <Activity size={22} />
-            <span className="text-base font-black uppercase tracking-wider">Вне зала</span>
-          </button>
+      ) : null}
+
+      <div className="mb-5 space-y-2">
+        <button
+          type="button"
+          onClick={() => requestStart('gym')}
+          className="flex w-full items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-orange-500 to-orange-600 p-5 shadow-lg shadow-orange-500/20 transition-all hover:from-orange-400 hover:to-orange-500"
+        >
+          <Dumbbell size={24} />
+          <span className="text-lg font-black uppercase tracking-wider">Начать зал</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => requestStart('bodyweight')}
+          className="flex w-full items-center justify-center gap-3 rounded-2xl border border-green-500/40 bg-green-500/10 p-4 text-green-300 transition-all hover:bg-green-500/20"
+        >
+          <Activity size={22} />
+          <span className="text-base font-black uppercase tracking-wider">Вне зала</span>
+        </button>
+      </div>
+
+      {pendingStart ? (
+        <div className="fixed inset-x-0 bottom-20 z-40 mx-auto w-[calc(100%-2rem)] max-w-md rounded-2xl border border-orange-500/40 bg-slate-900 p-4 shadow-2xl shadow-black/50">
+          <div className="mb-3 flex items-start justify-between gap-3">
+            <div>
+              <div className="mb-1 text-[10px] font-bold uppercase tracking-widest text-orange-300">Заменить активную?</div>
+              <div className="text-sm text-slate-300">
+                Сейчас сохранена {activeWorkout?.label}. Новая тренировка заменит этот черновик.
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setPendingStart(null)}
+              aria-label="Отмена"
+              className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-800"
+            >
+              <X size={18} />
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setPendingStart(null)}
+              className="rounded-xl border border-slate-700 bg-slate-950 p-3 text-sm font-bold text-slate-300"
+            >
+              Отмена
+            </button>
+            <button type="button" onClick={confirmStart} className="rounded-xl bg-orange-500 p-3 text-sm font-black text-black">
+              Заменить
+            </button>
+          </div>
         </div>
-      )}
+      ) : null}
 
       {recommendations.length > 0 ? (
         <div className="mb-4 rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
