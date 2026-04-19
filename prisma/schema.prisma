@@ -1,0 +1,46 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Workout {
+  id             String   @id @default(cuid())
+  number         Int
+  label          String
+  date           DateTime @db.Date
+  warmupTime     Int?
+  warmupDistance Float?
+  watchDuration  Int?
+  watchCalories  Int?
+  watchAvgHr     Int?
+  watchMaxHr     Int?
+  notes          String?
+  sets           Set[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([date])
+}
+
+model Set {
+  id         String  @id @default(cuid())
+  workoutId  String
+  workout    Workout @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  exerciseId String
+  setIndex   Int
+  weight     Float   @default(0)
+  reps       Int     @default(0)
+
+  @@index([workoutId])
+  @@unique([workoutId, exerciseId, setIndex])
+}
+
+model ActiveWorkout {
+  id        String   @id @default("active")
+  data      Json
+  updatedAt DateTime @updatedAt
+}
