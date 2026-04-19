@@ -61,29 +61,38 @@ export default function ActiveWorkout({
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 pb-24 text-slate-100">
+    <div className="active-workout-screen bg-slate-950 text-slate-100">
       <div className="mx-auto max-w-md">
-        <div className="sticky top-0 z-10 border-b border-slate-800 bg-slate-950/95 backdrop-blur">
-          <div className="flex items-center justify-between p-4">
+        <div className="active-workout-header sticky top-0 z-30 border-b border-slate-800 bg-slate-950/95 backdrop-blur">
+          <div className="flex min-h-16 items-center justify-between gap-3 px-4 pb-3 pt-2">
             {confirmCancel ? (
-              <div className="flex items-center gap-2">
-                <button type="button" onClick={() => setConfirmCancel(false)} className="px-2 py-1 text-xs text-slate-400">
+              <div className="flex min-w-28 items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setConfirmCancel(false)}
+                  className="min-h-11 rounded-lg px-2 py-1 text-xs text-slate-400"
+                >
                   Вернуться
                 </button>
                 <button
                   type="button"
                   onClick={onPause}
-                  className="rounded border border-orange-500/40 bg-orange-500/20 px-2 py-1 text-xs text-orange-300"
+                  className="min-h-11 rounded-lg border border-orange-500/40 bg-orange-500/20 px-3 py-1 text-xs text-orange-300"
                 >
                   Выйти
                 </button>
               </div>
             ) : (
-              <button type="button" onClick={() => setConfirmCancel(true)} className="text-slate-400 hover:text-red-400">
-                <X size={22} />
+              <button
+                type="button"
+                onClick={() => setConfirmCancel(true)}
+                aria-label="Выйти из тренировки"
+                className="flex h-12 min-w-12 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-900 hover:text-red-400"
+              >
+                <X size={26} />
               </button>
             )}
-            <div className="text-center">
+            <div className="min-w-0 flex-1 text-center">
               <div className="flex items-center justify-center gap-1 text-[10px] uppercase tracking-widest text-slate-500">
                 <span>В процессе</span>
                 {saveStatus === 'saved' ? (
@@ -93,12 +102,12 @@ export default function ActiveWorkout({
                 ) : null}
                 {saveStatus === 'error' ? <span className="text-red-400">offline</span> : null}
               </div>
-              <div className="text-sm font-bold">{workout.label}</div>
+              <div className="truncate text-sm font-bold">{workout.label}</div>
             </div>
             <button
               type="button"
               onClick={() => onFinish(workout)}
-              className="rounded-lg border border-green-500/40 bg-green-500/20 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-green-400 hover:bg-green-500/30"
+              className="min-h-11 min-w-28 rounded-lg border border-green-500/40 bg-green-500/20 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-green-400 hover:bg-green-500/30"
             >
               <Check size={14} className="mr-1 inline" />
               Готово
