@@ -9,6 +9,7 @@ datasource db {
 
 model Workout {
   id             String   @id @default(cuid())
+  kind           String   @default("gym")
   number         Int
   label          String
   date           DateTime @db.Date

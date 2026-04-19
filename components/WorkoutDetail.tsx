@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Heart } from 'lucide-react';
 import { formatDate } from '@/lib/format';
-import { DEFAULT_PROGRAM } from '@/lib/program';
+import { getProgramByKind } from '@/lib/program';
 import type { Workout } from '@/lib/types';
 
 interface WorkoutDetailProps {
@@ -14,6 +14,7 @@ interface WorkoutDetailProps {
 
 export default function WorkoutDetail({ workout, onBack, onDelete }: WorkoutDetailProps) {
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const program = getProgramByKind(workout.kind);
 
   return (
     <div className="min-h-screen bg-slate-950 pb-8 text-slate-100">
@@ -44,6 +45,7 @@ export default function WorkoutDetail({ workout, onBack, onDelete }: WorkoutDeta
 
         <div className="mb-5 text-center">
           <div className="text-2xl font-black">{workout.label}</div>
+          <div className="mt-1 text-[10px] font-bold uppercase tracking-widest text-orange-400">{program.shortName}</div>
           <div className="text-sm text-slate-500">{formatDate(workout.date)}</div>
         </div>
 
@@ -56,7 +58,7 @@ export default function WorkoutDetail({ workout, onBack, onDelete }: WorkoutDeta
           </div>
         ) : null}
 
-        {DEFAULT_PROGRAM.exercises.map((exercise) => {
+        {program.exercises.map((exercise) => {
           const sets = workout.sets[exercise.id];
           if (!sets || sets.every((set) => !set.w && !set.r)) return null;
 

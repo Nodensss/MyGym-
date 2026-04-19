@@ -5,7 +5,7 @@ import { Bot, Download } from 'lucide-react';
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { aiExportUrl, exportUrl } from '@/lib/api';
 import { formatShortDate } from '@/lib/format';
-import { DEFAULT_PROGRAM } from '@/lib/program';
+import { ALL_EXERCISES } from '@/lib/program';
 import type { Workout } from '@/lib/types';
 
 interface ProgressTabProps {
@@ -30,22 +30,25 @@ function StatCard({ label, value, color = 'slate' }: StatCardProps) {
 
 export default function ProgressTab({ history }: ProgressTabProps) {
   const [selectedEx, setSelectedEx] = useState('bench');
-  const exercise = DEFAULT_PROGRAM.exercises.find((item) => item.id === selectedEx) ?? DEFAULT_PROGRAM.exercises[0];
+  const exercise = ALL_EXERCISES.find((item) => item.id === selectedEx) ?? ALL_EXERCISES[0];
   const metricKey = exercise.noWeight ? 'reps' : 'weight';
   const metricLabel = exercise.noWeight ? 'Повторы за тренировку' : 'Макс. вес';
   const recordLabel = exercise.noWeight ? 'Рекорд повторов' : 'Рекорд';
   const progressUnit = exercise.noWeight ? ' раз' : '';
 
-  const data = history.map((workout) => {
-    const sets = workout.sets[selectedEx];
-    const value = exercise.noWeight
-      ? sets?.reduce((sum, set) => sum + (Number(set.r) || 0), 0) ?? 0
-      : sets
-        ? Math.max(...sets.map((set) => Number(set.w) || 0), 0)
-        : 0;
+  const data = history
+    .map((workout) => {
+      const sets = workout.sets[selectedEx];
+      if (!sets?.length) return null;
 
-    return { date: formatShortDate(workout.date), value, label: workout.label };
-  });
+      const value = exercise.noWeight
+        ? sets.reduce((sum, set) => sum + (Number(set.r) || 0), 0)
+        : Math.max(...sets.map((set) => Number(set.w) || 0), 0);
+
+      if (value <= 0) return null;
+      return { date: formatShortDate(workout.date), value, label: workout.label };
+    })
+    .filter((item): item is { date: string; value: number; label: string } => Boolean(item));
 
   const firstValue = data[0]?.value ?? 0;
   const lastValue = data[data.length - 1]?.value ?? 0;
@@ -57,7 +60,7 @@ export default function ProgressTab({ history }: ProgressTabProps) {
       <h2 className="mb-4 text-2xl font-black uppercase tracking-wider">Прогресс</h2>
 
       <div className="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-2">
-        {DEFAULT_PROGRAM.exercises.map((item) => (
+        {ALL_EXERCISES.map((item) => (
           <button
             key={item.id}
             type="button"

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Check, Flame, Heart, Save, Timer, X } from 'lucide-react';
-import { DEFAULT_PROGRAM } from '@/lib/program';
+import { getProgramByKind } from '@/lib/program';
 import type { Workout } from '@/lib/types';
 import Stepper from '@/components/Stepper';
 
@@ -27,7 +27,8 @@ export default function ActiveWorkout({
   history,
   saveStatus
 }: ActiveWorkoutProps) {
-  const currentEx = Math.min(workout.currentEx ?? 0, DEFAULT_PROGRAM.exercises.length - 1);
+  const program = getProgramByKind(workout.kind);
+  const currentEx = Math.min(workout.currentEx ?? 0, program.exercises.length - 1);
   const setCurrentEx = (next: number) => setWorkout({ ...workout, currentEx: next });
   const [timer, setTimer] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
@@ -39,8 +40,8 @@ export default function ActiveWorkout({
     return () => window.clearInterval(interval);
   }, [timerRunning]);
 
-  const exercise = DEFAULT_PROGRAM.exercises[currentEx];
-  const lastWorkout = history[history.length - 1];
+  const exercise = program.exercises[currentEx];
+  const lastWorkout = [...history].reverse().find((item) => item.sets[exercise.id]);
   const lastSets = lastWorkout?.sets[exercise.id];
   const exerciseSets =
     workout.sets[exercise.id] ??
@@ -116,7 +117,7 @@ export default function ActiveWorkout({
           <div className="h-1 bg-slate-800">
             <div
               className="h-full bg-gradient-to-r from-orange-500 to-orange-400 transition-all"
-              style={{ width: `${((currentEx + 1) / DEFAULT_PROGRAM.exercises.length) * 100}%` }}
+              style={{ width: `${((currentEx + 1) / program.exercises.length) * 100}%` }}
             />
           </div>
         </div>
@@ -153,7 +154,7 @@ export default function ActiveWorkout({
 
           <div className="mb-3 flex items-center justify-between">
             <div className="text-[10px] uppercase tracking-widest text-slate-500">
-              {currentEx + 1} / {DEFAULT_PROGRAM.exercises.length}
+              {currentEx + 1} / {program.exercises.length}
             </div>
             <div className="text-[10px] uppercase tracking-widest text-orange-400">{exercise.group}</div>
           </div>
@@ -239,19 +240,19 @@ export default function ActiveWorkout({
             <button
               type="button"
               onClick={() => {
-                if (currentEx < DEFAULT_PROGRAM.exercises.length - 1) {
+                if (currentEx < program.exercises.length - 1) {
                   setCurrentEx(currentEx + 1);
                   resetTimer();
                 }
               }}
-              disabled={currentEx === DEFAULT_PROGRAM.exercises.length - 1}
+              disabled={currentEx === program.exercises.length - 1}
               className="flex-1 rounded-xl bg-orange-500 py-3 text-sm font-bold text-black disabled:opacity-30"
             >
               Далее →
             </button>
           </div>
 
-          {currentEx === DEFAULT_PROGRAM.exercises.length - 1 ? (
+          {currentEx === program.exercises.length - 1 ? (
             <div className="mt-4 rounded-xl border border-slate-800 bg-slate-900 p-3">
               <div className="mb-3 flex items-center gap-2">
                 <Heart size={14} className="text-red-400" />

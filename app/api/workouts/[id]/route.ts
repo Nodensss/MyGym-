@@ -46,6 +46,7 @@ export async function PATCH(request: Request, { params }: RouteContext) {
     const data: Prisma.WorkoutUpdateInput = {};
 
     if (body.number !== undefined) data.number = body.number;
+    if (body.kind !== undefined) data.kind = body.kind;
     if (body.label !== undefined) data.label = body.label;
     if (body.date !== undefined) data.date = parseDate(body.date);
     if (body.warmup !== undefined) {

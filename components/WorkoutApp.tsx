@@ -10,8 +10,8 @@ import {
   saveActive
 } from '@/lib/api';
 import { INITIAL_HISTORY } from '@/lib/fallback-data';
-import { DEFAULT_PROGRAM } from '@/lib/program';
-import type { TabId, Workout } from '@/lib/types';
+import { getProgramByKind } from '@/lib/program';
+import type { TabId, Workout, WorkoutKind } from '@/lib/types';
 import ActiveWorkout from '@/components/ActiveWorkout';
 import BottomNav from '@/components/BottomNav';
 import HistoryTab from '@/components/HistoryTab';
@@ -166,18 +166,20 @@ export default function WorkoutApp() {
     writeJson(HISTORY_CACHE_KEY, sorted);
   };
 
-  const startNewWorkout = () => {
+  const startNewWorkout = (kind: WorkoutKind = 'gym') => {
     const nextNumber = getNextWorkoutNumber(history);
-    const lastWorkout = history[history.length - 1];
+    const program = getProgramByKind(kind);
 
     const newWorkout: Workout = {
       id: `local-${Date.now()}`,
+      kind,
       number: nextNumber,
       date: todayIso(),
-      label: `Тренировка #${nextNumber}`,
-      warmup: { time: 10, distance: 1 },
+      label: kind === 'bodyweight' ? `Вне зала #${nextNumber}` : `Тренировка #${nextNumber}`,
+      warmup: kind === 'bodyweight' ? { time: 5, distance: 0 } : { time: 10, distance: 1 },
       sets: Object.fromEntries(
-        DEFAULT_PROGRAM.exercises.map((exercise) => {
+        program.exercises.map((exercise) => {
+          const lastWorkout = [...history].reverse().find((item) => item.sets[exercise.id]);
           const lastSets = lastWorkout?.sets[exercise.id];
           const baseW = exercise.noWeight
             ? 0

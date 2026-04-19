@@ -48,6 +48,7 @@ export async function POST(request: Request) {
     const created = await prisma.workout.create({
       data: {
         number,
+        kind: body.kind ?? 'gym',
         label: body.label || `Тренировка #${number}`,
         date: parseDate(body.date),
         warmupTime: body.warmup?.time ?? null,

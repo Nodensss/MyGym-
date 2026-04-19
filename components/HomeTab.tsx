@@ -1,15 +1,15 @@
 'use client';
 
-import { AlertTriangle, ChevronRight, Dumbbell, Play, TrendingUp } from 'lucide-react';
+import { Activity, AlertTriangle, ChevronRight, Dumbbell, Play, TrendingUp } from 'lucide-react';
 import { formatDate } from '@/lib/format';
-import { DEFAULT_PROGRAM } from '@/lib/program';
+import { DEFAULT_PROGRAM, getProgramByKind } from '@/lib/program';
 import { getRecommendations } from '@/lib/recommendations';
-import type { Workout } from '@/lib/types';
+import type { Workout, WorkoutKind } from '@/lib/types';
 
 interface HomeTabProps {
   history: Workout[];
   activeWorkout: Workout | null;
-  onStart: () => void;
+  onStart: (kind: WorkoutKind) => void;
   onContinue: () => void;
   onView: (workout: Workout) => void;
 }
@@ -29,6 +29,7 @@ export default function HomeTab({ history, activeWorkout, onStart, onContinue, o
   const daysSince = lastDate ? Math.floor((today.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24)) : null;
   const nextNum = Math.max(0, ...history.map((workout) => workout.number ?? 0)) + 1;
   const recommendations = getRecommendations(history);
+  const activeProgram = getProgramByKind(activeWorkout?.kind);
 
   return (
     <div className="p-4">
@@ -80,7 +81,7 @@ export default function HomeTab({ history, activeWorkout, onStart, onContinue, o
               </div>
             </div>
             <div className="rounded-lg border border-slate-700 bg-slate-950 px-2 py-1 text-xs font-bold text-slate-300">
-              {(activeWorkout.currentEx ?? 0) + 1} / {DEFAULT_PROGRAM.exercises.length}
+              {(activeWorkout.currentEx ?? 0) + 1} / {activeProgram.exercises.length}
             </div>
           </div>
           <button
@@ -93,14 +94,24 @@ export default function HomeTab({ history, activeWorkout, onStart, onContinue, o
           </button>
         </div>
       ) : (
-        <button
-          type="button"
-          onClick={onStart}
-          className="mb-5 flex w-full items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-orange-500 to-orange-600 p-5 shadow-lg shadow-orange-500/20 transition-all hover:from-orange-400 hover:to-orange-500"
-        >
-          <Dumbbell size={24} />
-          <span className="text-lg font-black uppercase tracking-wider">Начать тренировку</span>
-        </button>
+        <div className="mb-5 space-y-2">
+          <button
+            type="button"
+            onClick={() => onStart('gym')}
+            className="flex w-full items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-orange-500 to-orange-600 p-5 shadow-lg shadow-orange-500/20 transition-all hover:from-orange-400 hover:to-orange-500"
+          >
+            <Dumbbell size={24} />
+            <span className="text-lg font-black uppercase tracking-wider">Начать зал</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => onStart('bodyweight')}
+            className="flex w-full items-center justify-center gap-3 rounded-2xl border border-green-500/40 bg-green-500/10 p-4 text-green-300 transition-all hover:bg-green-500/20"
+          >
+            <Activity size={22} />
+            <span className="text-base font-black uppercase tracking-wider">Вне зала</span>
+          </button>
+        </div>
       )}
 
       {recommendations.length > 0 ? (

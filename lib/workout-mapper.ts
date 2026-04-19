@@ -1,5 +1,5 @@
-import type { WatchStats, Workout, WorkoutSet, WorkoutSets } from '@/lib/types';
-import { DEFAULT_PROGRAM } from '@/lib/program';
+import type { WatchStats, Workout, WorkoutKind, WorkoutSet, WorkoutSets } from '@/lib/types';
+import { getProgramByKind } from '@/lib/program';
 
 type DbSet = {
   exerciseId: string;
@@ -10,6 +10,7 @@ type DbSet = {
 
 export type DbWorkoutWithSets = {
   id: string;
+  kind: string;
   number: number;
   label: string;
   date: Date;
@@ -25,9 +26,11 @@ export type DbWorkoutWithSets = {
   updatedAt: Date;
 };
 
-export function blankSets(): WorkoutSets {
+export function blankSets(kind: WorkoutKind = 'gym'): WorkoutSets {
+  const program = getProgramByKind(kind);
+
   return Object.fromEntries(
-    DEFAULT_PROGRAM.exercises.map((exercise) => [
+    program.exercises.map((exercise) => [
       exercise.id,
       [
         { w: exercise.noWeight ? 0 : exercise.defaultW, r: exercise.defaultR },
@@ -58,6 +61,7 @@ export function serializeWorkout(workout: DbWorkoutWithSets): Workout {
 
   return {
     id: workout.id,
+    kind: getProgramByKind(workout.kind).kind,
     number: workout.number,
     label: workout.label,
     date: workout.date.toISOString().slice(0, 10),

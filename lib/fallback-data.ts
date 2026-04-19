@@ -3,6 +3,7 @@ import type { Workout } from '@/lib/types';
 export const INITIAL_HISTORY: Workout[] = [
   {
     id: 'w1',
+    kind: 'gym',
     number: 1,
     date: '2026-04-01',
     label: 'Тренировка #1',
@@ -49,6 +50,7 @@ export const INITIAL_HISTORY: Workout[] = [
   },
   {
     id: 'w2',
+    kind: 'gym',
     number: 2,
     date: '2026-04-07',
     label: 'Тренировка #2',
@@ -95,6 +97,7 @@ export const INITIAL_HISTORY: Workout[] = [
   },
   {
     id: 'w3',
+    kind: 'gym',
     number: 3,
     date: '2026-04-11',
     label: 'Тренировка #3',

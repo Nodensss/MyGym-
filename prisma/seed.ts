@@ -5,6 +5,7 @@ const prisma = new PrismaClient();
 const WORKOUTS = [
   {
     number: 1,
+    kind: 'gym',
     label: 'Тренировка #1',
     date: '2026-04-01',
     warmupTime: 8,
@@ -50,6 +51,7 @@ const WORKOUTS = [
   },
   {
     number: 2,
+    kind: 'gym',
     label: 'Тренировка #2',
     date: '2026-04-07',
     warmupTime: 6,
@@ -95,6 +97,7 @@ const WORKOUTS = [
   },
   {
     number: 3,
+    kind: 'gym',
     label: 'Тренировка #3',
     date: '2026-04-11',
     warmupTime: 8,
@@ -153,6 +156,7 @@ async function main() {
     await prisma.workout.create({
       data: {
         number: workout.number,
+        kind: workout.kind,
         label: workout.label,
         date: new Date(`${workout.date}T00:00:00.000Z`),
         warmupTime: workout.warmupTime,

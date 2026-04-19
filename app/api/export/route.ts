@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { DEFAULT_PROGRAM } from '@/lib/program';
+import { ALL_EXERCISES, WORKOUT_PROGRAMS, getProgramByKind } from '@/lib/program';
 import { prisma } from '@/lib/prisma';
 import { serializeWorkout } from '@/lib/workout-mapper';
 import type { Workout } from '@/lib/types';
@@ -9,6 +9,7 @@ export const dynamic = 'force-dynamic';
 
 const HEADERS = [
   'Date',
+  'Type',
   'Workout',
   'Exercise',
   'Set',
@@ -57,25 +58,32 @@ function buildAiReport(workouts: Workout[]) {
     'Purpose: compact context for an AI coach. Analyze progression, fatigue, exercise choices, and suggest safe next workout targets.',
     '',
     `Exported workouts: ${workouts.length}`,
-    `Program: ${DEFAULT_PROGRAM.name}`,
-    `Scheme: ${DEFAULT_PROGRAM.scheme}`,
+    `Programs: ${Object.values(WORKOUT_PROGRAMS).map((program) => program.name).join('; ')}`,
     '',
     '## Exercise Reference',
     ''
   ];
 
-  DEFAULT_PROGRAM.exercises.forEach((exercise) => {
-    lines.push(
-      `- ${exercise.id}: ${exercise.name}; group: ${exercise.group}; target: ${exercise.target}; unit: ${
-        exercise.noWeight ? 'bodyweight reps' : exercise.unit
-      }; hint: ${exercise.hint || 'none'}`
-    );
+  Object.values(WORKOUT_PROGRAMS).forEach((program) => {
+    lines.push(`### ${program.name}`);
+    lines.push(`Scheme: ${program.scheme}`);
+    program.exercises.forEach((exercise) => {
+      lines.push(
+        `- ${exercise.id}: ${exercise.name}; group: ${exercise.group}; target: ${exercise.target}; unit: ${
+          exercise.noWeight ? 'bodyweight reps' : exercise.unit
+        }; hint: ${exercise.hint || 'none'}`
+      );
+    });
+    lines.push('');
   });
 
-  lines.push('', '## Workout Log', '');
+  lines.push('## Workout Log', '');
 
   workouts.forEach((workout) => {
+    const program = getProgramByKind(workout.kind);
+
     lines.push(`### ${workout.label} - ${workout.date}`);
+    lines.push(`- Type: ${program.name}`);
     lines.push(`- Warmup: ${workout.warmup.time || 0} min, ${workout.warmup.distance || 0} km`);
 
     if (workout.watch && (workout.watch.duration || workout.watch.calories || workout.watch.avgHr || workout.watch.maxHr)) {
@@ -91,7 +99,7 @@ function buildAiReport(workouts: Workout[]) {
     }
 
     lines.push('- Sets:');
-    DEFAULT_PROGRAM.exercises.forEach((exercise) => {
+    program.exercises.forEach((exercise) => {
       const sets = workout.sets[exercise.id];
       if (!sets?.length) return;
 
@@ -107,7 +115,7 @@ function buildAiReport(workouts: Workout[]) {
 
   lines.push('## Progress Summary', '');
 
-  DEFAULT_PROGRAM.exercises.forEach((exercise) => {
+  ALL_EXERCISES.forEach((exercise) => {
     const values = workouts.map((workout) =>
       exercise.noWeight ? totalReps(workout, exercise.id) : maxWeight(workout, exercise.id)
     );
@@ -159,13 +167,14 @@ export async function GET(request: Request) {
     const rows: Array<Array<string | number | null | undefined>> = [HEADERS];
 
     serialized.forEach((workout) => {
-      DEFAULT_PROGRAM.exercises.forEach((exercise) => {
+      getProgramByKind(workout.kind).exercises.forEach((exercise) => {
         const sets = workout.sets[exercise.id];
         if (!sets) return;
 
         sets.forEach((set, index) => {
           rows.push([
             workout.date,
+            getProgramByKind(workout.kind).shortName,
             workout.label,
             exercise.name,
             index + 1,

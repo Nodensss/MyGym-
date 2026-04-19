@@ -12,6 +12,16 @@ export interface Exercise {
   noWeight?: boolean;
 }
 
+export type WorkoutKind = 'gym' | 'bodyweight';
+
+export interface WorkoutProgram {
+  kind: WorkoutKind;
+  name: string;
+  shortName: string;
+  scheme: string;
+  exercises: Exercise[];
+}
+
 export interface WorkoutSet {
   w: number;
   r: number;
@@ -33,6 +43,7 @@ export interface WatchStats {
 
 export interface Workout {
   id: string;
+  kind?: WorkoutKind;
   number?: number;
   label: string;
   date: string;
