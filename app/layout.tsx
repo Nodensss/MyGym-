@@ -1,31 +1,11 @@
 import type { Metadata, Viewport } from 'next';
-import { Cormorant_Garamond, Inter, JetBrains_Mono, UnifrakturMaguntia } from 'next/font/google';
+import { Inter } from 'next/font/google';
 import './globals.css';
 import ServiceWorkerRegister from '@/components/ServiceWorkerRegister';
-import { ThemeProvider } from '@/lib/theme-context';
 
 const inter = Inter({
   subsets: ['latin', 'cyrillic'],
   variable: '--font-geist-sans'
-});
-
-const cormorant = Cormorant_Garamond({
-  subsets: ['latin', 'cyrillic'],
-  weight: ['300', '400', '500'],
-  style: ['normal', 'italic'],
-  variable: '--font-cormorant'
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ['latin', 'cyrillic'],
-  weight: ['300', '400'],
-  variable: '--font-jetbrains'
-});
-
-const unifraktur = UnifrakturMaguntia({
-  subsets: ['latin'],
-  weight: '400',
-  variable: '--font-unifraktur'
 });
 
 export const metadata: Metadata = {
@@ -55,15 +35,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="ru"
-      className={`${inter.variable} ${cormorant.variable} ${jetbrainsMono.variable} ${unifraktur.variable}`}
-    >
+    <html lang="ru" className={inter.variable}>
       <body>
-        <ThemeProvider>
-          {children}
-          <ServiceWorkerRegister />
-        </ThemeProvider>
+        {children}
+        <ServiceWorkerRegister />
       </body>
     </html>
   );
