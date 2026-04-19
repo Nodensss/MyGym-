@@ -18,9 +18,9 @@ export default function WorkoutDetail({ workout, onBack, onDelete }: WorkoutDeta
 
   return (
     <div className="min-h-screen bg-slate-950 pb-8 text-slate-100">
-      <div className="mx-auto max-w-md p-4">
+      <div className="active-workout-header mx-auto max-w-md px-4 pb-4">
         <div className="mb-4 flex items-center justify-between">
-          <button type="button" onClick={onBack} className="text-sm text-slate-400">
+          <button type="button" onClick={onBack} className="relative z-10 text-sm text-slate-400">
             ← Назад
           </button>
           {confirmDelete ? (
@@ -37,7 +37,7 @@ export default function WorkoutDetail({ workout, onBack, onDelete }: WorkoutDeta
               </button>
             </div>
           ) : (
-            <button type="button" onClick={() => setConfirmDelete(true)} className="text-xs text-red-400/60">
+            <button type="button" onClick={() => setConfirmDelete(true)} className="relative z-10 text-xs text-red-400/60">
               Удалить
             </button>
           )}
