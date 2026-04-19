@@ -1,0 +1,1472 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MyGym · Mournful Congregation</title>
+<style>
+html, body { margin: 0; padding: 0; background: #000; min-height: 100vh; font-family: 'Cormorant Garamond', serif; }
+/* ════════════════════════════════════════════════════════════
+   MOURNFUL CONGREGATION — ritual design system
+   ════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=JetBrains+Mono:wght@300;400;500&display=swap');
+
+:root {
+  --void: #000000;
+  --void-2: #060606;
+  --bone: #E8E4DA;
+  --bone-dim: rgba(232, 228, 218, 0.55);
+  --bone-faint: rgba(232, 228, 218, 0.22);
+  --bone-ghost: rgba(232, 228, 218, 0.08);
+  --ash: #6B6560;
+  --ember: #8B1E1E;
+  --ember-dim: rgba(139, 30, 30, 0.6);
+  --ember-glow: rgba(139, 30, 30, 0.14);
+
+  --fraktur: 'UnifrakturMaguntia', serif;
+  --serif: 'Cormorant Garamond', serif;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* ──────── Reset within the phone stage ──────── */
+.ritual-root *, .ritual-root *::before, .ritual-root *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ritual-root {
+  background: var(--void);
+  color: var(--bone);
+  font-family: var(--serif);
+  font-weight: 300;
+  letter-spacing: 0.01em;
+  min-height: 100%;
+  position: relative;
+  isolation: isolate;
+}
+
+/* film grain overlay — rendered once at stage level */
+.ritual-grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.06;
+  mix-blend-mode: screen;
+  z-index: 100;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.85 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
+
+/* ──────── Type primitives ──────── */
+.fraktur {
+  font-family: var(--fraktur);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  line-height: 0.95;
+}
+
+.script {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 300;
+  letter-spacing: 0.02em;
+}
+
+.mono {
+  font-family: var(--mono);
+  font-weight: 300;
+  letter-spacing: 0.04em;
+}
+
+.kaps {
+  font-family: var(--serif);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.32em;
+  font-size: 10px;
+}
+
+.kaps-sm {
+  font-family: var(--serif);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.42em;
+  font-size: 8.5px;
+}
+
+/* ──────── Hairline rules ──────── */
+.rule {
+  height: 1px;
+  background: var(--bone-faint);
+  width: 100%;
+}
+
+.rule-dim {
+  height: 1px;
+  background: var(--bone-ghost);
+  width: 100%;
+}
+
+.rule-vertical {
+  width: 1px;
+  background: var(--bone-faint);
+  height: 100%;
+}
+
+/* ──────── Cross / sigil primitives ──────── */
+.cross-sm {
+  width: 6px;
+  height: 6px;
+  position: relative;
+  display: inline-block;
+}
+.cross-sm::before, .cross-sm::after {
+  content: '';
+  position: absolute;
+  background: currentColor;
+}
+.cross-sm::before { top: 0; bottom: 0; left: 50%; width: 1px; transform: translateX(-50%); }
+.cross-sm::after { left: 0; right: 0; top: 50%; height: 1px; transform: translateY(-50%); }
+
+/* ──────── Bottom tab ──────── */
+.tab-dot {
+  width: 4px; height: 4px; border-radius: 50%;
+  background: var(--bone);
+}
+.tab-inactive { background: var(--bone-ghost); }
+
+/* ──────── Ember (blood) ──────── */
+.ember { color: var(--ember); }
+.ember-bg { background: var(--ember); color: var(--bone); }
+
+/* ──────── Scroll ──────── */
+.ritual-scroll::-webkit-scrollbar { display: none; }
+.ritual-scroll { scrollbar-width: none; -ms-overflow-style: none; }
+
+/* ──────── Transitions ──────── */
+.screen {
+  position: absolute;
+  inset: 0;
+  transition: opacity 0.5s cubic-bezier(0.2, 0, 0.2, 1), transform 0.5s cubic-bezier(0.2, 0, 0.2, 1);
+  will-change: opacity, transform;
+}
+.screen-enter { opacity: 0; transform: translateY(12px); }
+.screen-active { opacity: 1; transform: translateY(0); }
+.screen-exit { opacity: 0; transform: translateY(-8px); pointer-events: none; }
+
+/* ──────── Reveal on scroll (home entry) ──────── */
+@keyframes riseFromVoid {
+  from { opacity: 0; transform: translateY(22px); filter: blur(3px); }
+  to   { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+.rise {
+  animation: riseFromVoid 1.2s cubic-bezier(0.2, 0, 0.15, 1) both;
+}
+.rise-2 { animation-delay: 0.18s; }
+.rise-3 { animation-delay: 0.34s; }
+.rise-4 { animation-delay: 0.5s; }
+.rise-5 { animation-delay: 0.66s; }
+.rise-6 { animation-delay: 0.82s; }
+
+/* ember pulse */
+@keyframes emberPulse {
+  0%, 100% { opacity: 0.85; }
+  50% { opacity: 0.55; }
+}
+.ember-pulse { animation: emberPulse 3.4s ease-in-out infinite; }
+
+/* heatmap stripes */
+.heat-stripe {
+  background-image: repeating-linear-gradient(
+    -35deg,
+    currentColor 0,
+    currentColor 0.8px,
+    transparent 0.8px,
+    transparent 3px
+  );
+}
+
+/* Pressable */
+.press { cursor: pointer; transition: opacity 0.2s; }
+.press:active { opacity: 0.5; }
+
+</style>
+</head>
+<body>
+<div id="root"></div>
+<template id="__bundler_thumbnail" data-bg-color="#000000">
+  <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+    <rect width="1200" height="800" fill="#000"/>
+    <circle cx="600" cy="400" r="280" fill="none" stroke="rgba(232,228,218,0.2)" stroke-width="2"/>
+    <circle cx="600" cy="400" r="260" fill="none" stroke="rgba(232,228,218,0.1)" stroke-width="1"/>
+    <text x="600" y="340" text-anchor="middle" font-family="UnifrakturMaguntia, serif" font-size="140" fill="#E8E4DA">M</text>
+    <text x="600" y="470" text-anchor="middle" font-family="Cormorant Garamond, serif" font-style="italic" font-size="32" fill="#8B1E1E" letter-spacing="12">MY · GYM</text>
+    <line x1="540" y1="510" x2="660" y2="510" stroke="#E8E4DA" stroke-width="1"/>
+    <text x="600" y="560" text-anchor="middle" font-family="monospace" font-size="18" fill="rgba(232,228,218,0.5)" letter-spacing="8">MMXXVI</text>
+  </svg>
+</template>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" data-presets="react">
+
+// iOS.jsx — Simplified iOS 26 (Liquid Glass) device frame
+// Based on the iOS 26 UI Kit + Figma status bar spec. No assets, no deps.
+// Exports: IOSDevice, IOSStatusBar, IOSNavBar, IOSGlassPill, IOSList, IOSListRow, IOSKeyboard
+
+// ─────────────────────────────────────────────────────────────
+// Status bar
+// ─────────────────────────────────────────────────────────────
+function IOSStatusBar({ dark = false, time = '9:41' }) {
+  const c = dark ? '#fff' : '#000';
+  return (
+    <div style={{
+      display: 'flex', gap: 154, alignItems: 'center', justifyContent: 'center',
+      padding: '21px 24px 19px', boxSizing: 'border-box',
+      position: 'relative', zIndex: 20, width: '100%',
+    }}>
+      <div style={{ flex: 1, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: 1.5 }}>
+        <span style={{
+          fontFamily: '-apple-system, "SF Pro", system-ui', fontWeight: 590,
+          fontSize: 17, lineHeight: '22px', color: c,
+        }}>{time}</span>
+      </div>
+      <div style={{ flex: 1, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, paddingTop: 1, paddingRight: 1 }}>
+        <svg width="19" height="12" viewBox="0 0 19 12">
+          <rect x="0" y="7.5" width="3.2" height="4.5" rx="0.7" fill={c}/>
+          <rect x="4.8" y="5" width="3.2" height="7" rx="0.7" fill={c}/>
+          <rect x="9.6" y="2.5" width="3.2" height="9.5" rx="0.7" fill={c}/>
+          <rect x="14.4" y="0" width="3.2" height="12" rx="0.7" fill={c}/>
+        </svg>
+        <svg width="17" height="12" viewBox="0 0 17 12">
+          <path d="M8.5 3.2C10.8 3.2 12.9 4.1 14.4 5.6L15.5 4.5C13.7 2.7 11.2 1.5 8.5 1.5C5.8 1.5 3.3 2.7 1.5 4.5L2.6 5.6C4.1 4.1 6.2 3.2 8.5 3.2Z" fill={c}/>
+          <path d="M8.5 6.8C9.9 6.8 11.1 7.3 12 8.2L13.1 7.1C11.8 5.9 10.2 5.1 8.5 5.1C6.8 5.1 5.2 5.9 3.9 7.1L5 8.2C5.9 7.3 7.1 6.8 8.5 6.8Z" fill={c}/>
+          <circle cx="8.5" cy="10.5" r="1.5" fill={c}/>
+        </svg>
+        <svg width="27" height="13" viewBox="0 0 27 13">
+          <rect x="0.5" y="0.5" width="23" height="12" rx="3.5" stroke={c} strokeOpacity="0.35" fill="none"/>
+          <rect x="2" y="2" width="20" height="9" rx="2" fill={c}/>
+          <path d="M25 4.5V8.5C25.8 8.2 26.5 7.2 26.5 6.5C26.5 5.8 25.8 4.8 25 4.5Z" fill={c} fillOpacity="0.4"/>
+        </svg>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Liquid glass pill — blur + tint + shine
+// ─────────────────────────────────────────────────────────────
+function IOSGlassPill({ children, dark = false, style = {} }) {
+  return (
+    <div style={{
+      height: 44, minWidth: 44, borderRadius: 9999,
+      position: 'relative', overflow: 'hidden',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      boxShadow: dark
+        ? '0 2px 6px rgba(0,0,0,0.35), 0 6px 16px rgba(0,0,0,0.2)'
+        : '0 1px 3px rgba(0,0,0,0.07), 0 3px 10px rgba(0,0,0,0.06)',
+      ...style,
+    }}>
+      {/* blur + tint */}
+      <div style={{
+        position: 'absolute', inset: 0, borderRadius: 9999,
+        backdropFilter: 'blur(12px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+        background: dark ? 'rgba(120,120,128,0.28)' : 'rgba(255,255,255,0.5)',
+      }} />
+      {/* shine */}
+      <div style={{
+        position: 'absolute', inset: 0, borderRadius: 9999,
+        boxShadow: dark
+          ? 'inset 1.5px 1.5px 1px rgba(255,255,255,0.15), inset -1px -1px 1px rgba(255,255,255,0.08)'
+          : 'inset 1.5px 1.5px 1px rgba(255,255,255,0.7), inset -1px -1px 1px rgba(255,255,255,0.4)',
+        border: dark ? '0.5px solid rgba(255,255,255,0.15)' : '0.5px solid rgba(0,0,0,0.06)',
+      }} />
+      <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', padding: '0 4px' }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Navigation bar — glass pills + large title
+// ─────────────────────────────────────────────────────────────
+function IOSNavBar({ title = 'Title', dark = false, trailingIcon = true }) {
+  const muted = dark ? 'rgba(255,255,255,0.6)' : '#404040';
+  const text = dark ? '#fff' : '#000';
+  const pillIcon = (content) => (
+    <IOSGlassPill dark={dark}>
+      <div style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {content}
+      </div>
+    </IOSGlassPill>
+  );
+  return (
+    <div style={{
+      display: 'flex', flexDirection: 'column', gap: 10,
+      paddingTop: 62, paddingBottom: 10, position: 'relative', zIndex: 5,
+    }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '0 16px',
+      }}>
+        {/* back chevron */}
+        {pillIcon(
+          <svg width="12" height="20" viewBox="0 0 12 20" fill="none" style={{ marginLeft: -1 }}>
+            <path d="M10 2L2 10l8 8" stroke={muted} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        )}
+        {/* trailing ellipsis */}
+        {trailingIcon && pillIcon(
+          <svg width="22" height="6" viewBox="0 0 22 6">
+            <circle cx="3" cy="3" r="2.5" fill={muted}/>
+            <circle cx="11" cy="3" r="2.5" fill={muted}/>
+            <circle cx="19" cy="3" r="2.5" fill={muted}/>
+          </svg>
+        )}
+      </div>
+      {/* large title */}
+      <div style={{
+        padding: '0 16px',
+        fontFamily: '-apple-system, system-ui',
+        fontSize: 34, fontWeight: 700, lineHeight: '41px',
+        color: text, letterSpacing: 0.4,
+      }}>{title}</div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Grouped list (inset card, r:26) + row (52px)
+// ─────────────────────────────────────────────────────────────
+function IOSListRow({ title, detail, icon, chevron = true, isLast = false, dark = false }) {
+  const text = dark ? '#fff' : '#000';
+  const sec = dark ? 'rgba(235,235,245,0.6)' : 'rgba(60,60,67,0.6)';
+  const ter = dark ? 'rgba(235,235,245,0.3)' : 'rgba(60,60,67,0.3)';
+  const sep = dark ? 'rgba(84,84,88,0.65)' : 'rgba(60,60,67,0.12)';
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', minHeight: 52,
+      padding: '0 16px', position: 'relative',
+      fontFamily: '-apple-system, system-ui', fontSize: 17,
+      letterSpacing: -0.43,
+    }}>
+      {icon && (
+        <div style={{
+          width: 30, height: 30, borderRadius: 7, background: icon,
+          marginRight: 12, flexShrink: 0,
+        }} />
+      )}
+      <div style={{ flex: 1, color: text }}>{title}</div>
+      {detail && <span style={{ color: sec, marginRight: 6 }}>{detail}</span>}
+      {chevron && (
+        <svg width="8" height="14" viewBox="0 0 8 14" style={{ flexShrink: 0 }}>
+          <path d="M1 1l6 6-6 6" stroke={ter} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      )}
+      {!isLast && (
+        <div style={{
+          position: 'absolute', bottom: 0, right: 0,
+          left: icon ? 58 : 16, height: 0.5, background: sep,
+        }} />
+      )}
+    </div>
+  );
+}
+
+function IOSList({ header, children, dark = false }) {
+  const hc = dark ? 'rgba(235,235,245,0.6)' : 'rgba(60,60,67,0.6)';
+  const bg = dark ? '#1C1C1E' : '#fff';
+  return (
+    <div>
+      {header && (
+        <div style={{
+          fontFamily: '-apple-system, system-ui', fontSize: 13,
+          color: hc, textTransform: 'uppercase',
+          padding: '8px 36px 6px', letterSpacing: -0.08,
+        }}>{header}</div>
+      )}
+      <div style={{
+        background: bg, borderRadius: 26,
+        margin: '0 16px', overflow: 'hidden',
+      }}>{children}</div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Device frame
+// ─────────────────────────────────────────────────────────────
+function IOSDevice({
+  children, width = 402, height = 874, dark = false,
+  title, keyboard = false,
+}) {
+  return (
+    <div style={{
+      width, height, borderRadius: 48, overflow: 'hidden',
+      position: 'relative', background: dark ? '#000' : '#F2F2F7',
+      boxShadow: '0 40px 80px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.12)',
+      fontFamily: '-apple-system, system-ui, sans-serif',
+      WebkitFontSmoothing: 'antialiased',
+    }}>
+      {/* dynamic island */}
+      <div style={{
+        position: 'absolute', top: 11, left: '50%', transform: 'translateX(-50%)',
+        width: 126, height: 37, borderRadius: 24, background: '#000', zIndex: 50,
+      }} />
+      {/* status bar (absolute) */}
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 }}>
+        <IOSStatusBar dark={dark} />
+      </div>
+      {/* nav + content */}
+      <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        {title !== undefined && <IOSNavBar title={title} dark={dark} />}
+        <div style={{ flex: 1, overflow: 'auto' }}>{children}</div>
+        {keyboard && <IOSKeyboard dark={dark} />}
+      </div>
+      {/* home indicator — always on top */}
+      <div style={{
+        position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 60,
+        height: 34, display: 'flex', justifyContent: 'center', alignItems: 'flex-end',
+        paddingBottom: 8, pointerEvents: 'none',
+      }}>
+        <div style={{
+          width: 139, height: 5, borderRadius: 100,
+          background: dark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.25)',
+        }} />
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Keyboard — iOS 26 liquid glass
+// ─────────────────────────────────────────────────────────────
+function IOSKeyboard({ dark = false }) {
+  const glyph = dark ? 'rgba(255,255,255,0.7)' : '#595959';
+  const sugg = dark ? 'rgba(255,255,255,0.6)' : '#333';
+  const keyBg = dark ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0.85)';
+
+  // special-key icons
+  const icons = {
+    shift: <svg width="19" height="17" viewBox="0 0 19 17"><path d="M9.5 1L1 9.5h4.5V16h8V9.5H18L9.5 1z" fill={glyph}/></svg>,
+    del: <svg width="23" height="17" viewBox="0 0 23 17"><path d="M7 1h13a2 2 0 012 2v11a2 2 0 01-2 2H7l-6-7.5L7 1z" fill="none" stroke={glyph} strokeWidth="1.6" strokeLinejoin="round"/><path d="M10 5l7 7M17 5l-7 7" stroke={glyph} strokeWidth="1.6" strokeLinecap="round"/></svg>,
+    ret: <svg width="20" height="14" viewBox="0 0 20 14"><path d="M18 1v6H4m0 0l4-4M4 7l4 4" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  };
+
+  const key = (content, { w, flex, ret, fs = 25, k } = {}) => (
+    <div key={k} style={{
+      height: 42, borderRadius: 8.5,
+      flex: flex ? 1 : undefined, width: w, minWidth: 0,
+      background: ret ? '#08f' : keyBg,
+      boxShadow: '0 1px 0 rgba(0,0,0,0.075)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontFamily: '-apple-system, "SF Compact", system-ui',
+      fontSize: fs, fontWeight: 458, color: ret ? '#fff' : glyph,
+    }}>{content}</div>
+  );
+
+  const row = (keys, pad = 0) => (
+    <div style={{ display: 'flex', gap: 6.5, justifyContent: 'center', padding: `0 ${pad}px` }}>
+      {keys.map(l => key(l, { flex: true, k: l }))}
+    </div>
+  );
+
+  return (
+    <div style={{
+      position: 'relative', zIndex: 15, borderRadius: 27, overflow: 'hidden',
+      padding: '11px 0 2px',
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+      boxShadow: dark
+        ? '0 -2px 20px rgba(0,0,0,0.09)'
+        : '0 -1px 6px rgba(0,0,0,0.018), 0 -3px 20px rgba(0,0,0,0.012)',
+    }}>
+      {/* liquid glass bg — same recipe as nav pills */}
+      <div style={{
+        position: 'absolute', inset: 0, borderRadius: 27,
+        backdropFilter: 'blur(12px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+        background: dark ? 'rgba(120,120,128,0.14)' : 'rgba(255,255,255,0.25)',
+      }} />
+      <div style={{
+        position: 'absolute', inset: 0, borderRadius: 27,
+        boxShadow: dark
+          ? 'inset 1.5px 1.5px 1px rgba(255,255,255,0.15)'
+          : 'inset 1.5px 1.5px 1px rgba(255,255,255,0.7), inset -1px -1px 1px rgba(255,255,255,0.4)',
+        border: dark ? '0.5px solid rgba(255,255,255,0.15)' : '0.5px solid rgba(0,0,0,0.06)',
+        pointerEvents: 'none',
+      }} />
+
+      {/* autocorrect bar */}
+      <div style={{
+        display: 'flex', gap: 20, alignItems: 'center',
+        padding: '8px 22px 13px', width: '100%', boxSizing: 'border-box',
+        position: 'relative',
+      }}>
+        {['"The"', 'the', 'to'].map((w, i) => (
+          <React.Fragment key={i}>
+            {i > 0 && <div style={{ width: 1, height: 25, background: '#ccc', opacity: 0.3 }} />}
+            <div style={{
+              flex: 1, textAlign: 'center',
+              fontFamily: '-apple-system, system-ui', fontSize: 17,
+              color: sugg, letterSpacing: -0.43, lineHeight: '22px',
+            }}>{w}</div>
+          </React.Fragment>
+        ))}
+      </div>
+
+      {/* key layout */}
+      <div style={{
+        display: 'flex', flexDirection: 'column', gap: 13,
+        padding: '0 6.5px', width: '100%', boxSizing: 'border-box',
+        position: 'relative',
+      }}>
+        {row(['q','w','e','r','t','y','u','i','o','p'])}
+        {row(['a','s','d','f','g','h','j','k','l'], 20)}
+        <div style={{ display: 'flex', gap: 14.25, alignItems: 'center' }}>
+          {key(icons.shift, { w: 45, k: 'shift' })}
+          <div style={{ display: 'flex', gap: 6.5, flex: 1 }}>
+            {['z','x','c','v','b','n','m'].map(l => key(l, { flex: true, k: l }))}
+          </div>
+          {key(icons.del, { w: 45, k: 'del' })}
+        </div>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          {key('ABC', { w: 92.25, fs: 18, k: 'abc' })}
+          {key('', { flex: true, k: 'space' })}
+          {key(icons.ret, { w: 92.25, ret: true, k: 'ret' })}
+        </div>
+      </div>
+
+      {/* bottom spacer (emoji+mic area, icons omitted) */}
+      <div style={{ height: 56, width: '100%', position: 'relative' }} />
+    </div>
+  );
+}
+
+Object.assign(window, {
+  IOSDevice, IOSStatusBar, IOSNavBar, IOSGlassPill, IOSList, IOSListRow, IOSKeyboard,
+});
+
+// Anatomy.jsx — uploaded muscle figure with ember glow overlay
+// Inline vector engraving; ember radial glows intensify when muscle group is trained.
+
+const __FIGURE_SVG = `<g fill="#6b1515" fill-rule="evenodd"><path d="M 557 240 L 552 242 L 556 243 L 557 252 L 554 253 L 554 285 L 539 289 L 532 287 L 517 293 L 508 293 L 507 289 L 494 292 L 478 288 L 477 284 L 464 285 L 460 280 L 461 272 L 464 271 L 461 260 L 465 243 L 462 241 L 450 241 L 435 251 L 411 260 L 406 259 L 397 269 L 388 275 L 382 275 L 377 284 L 357 284 L 356 281 L 352 281 L 351 284 L 339 282 L 338 285 L 332 283 L 314 288 L 290 309 L 290 317 L 284 321 L 284 338 L 279 342 L 283 344 L 283 351 L 278 352 L 277 349 L 277 356 L 271 358 L 267 364 L 267 370 L 261 374 L 252 399 L 254 407 L 251 408 L 251 415 L 255 416 L 254 432 L 258 433 L 256 456 L 252 457 L 255 458 L 255 480 L 252 481 L 256 482 L 257 493 L 252 494 L 253 499 L 249 500 L 242 517 L 238 536 L 240 545 L 237 546 L 240 569 L 237 571 L 242 573 L 242 579 L 239 580 L 240 584 L 244 585 L 242 590 L 251 600 L 253 617 L 256 618 L 254 624 L 257 643 L 260 645 L 260 679 L 257 680 L 260 681 L 259 697 L 255 698 L 258 699 L 258 708 L 254 709 L 257 712 L 257 720 L 253 721 L 256 728 L 252 729 L 255 730 L 257 749 L 261 749 L 264 754 L 264 762 L 273 767 L 283 765 L 284 768 L 292 768 L 293 772 L 298 772 L 299 768 L 307 768 L 308 771 L 310 766 L 316 766 L 317 763 L 325 764 L 329 754 L 335 755 L 338 749 L 335 738 L 338 726 L 336 719 L 339 718 L 339 714 L 319 685 L 311 679 L 311 675 L 314 674 L 312 663 L 309 662 L 309 627 L 312 626 L 313 620 L 312 607 L 324 598 L 324 592 L 334 575 L 338 574 L 336 568 L 340 566 L 338 559 L 341 558 L 341 550 L 337 546 L 339 538 L 336 530 L 332 528 L 329 504 L 341 489 L 341 470 L 347 467 L 352 451 L 359 452 L 362 462 L 374 480 L 391 497 L 391 501 L 396 502 L 398 509 L 403 510 L 401 516 L 405 518 L 405 550 L 402 552 L 403 557 L 407 558 L 405 564 L 410 566 L 410 575 L 413 576 L 413 588 L 410 589 L 412 599 L 408 600 L 409 610 L 404 622 L 400 623 L 403 624 L 397 650 L 393 651 L 390 661 L 386 662 L 382 676 L 384 681 L 380 682 L 377 688 L 379 693 L 374 695 L 376 700 L 368 709 L 367 722 L 362 724 L 364 729 L 360 730 L 352 768 L 355 769 L 355 773 L 351 774 L 354 775 L 354 780 L 350 781 L 353 782 L 352 796 L 348 797 L 351 800 L 350 824 L 346 825 L 349 828 L 349 852 L 346 853 L 350 854 L 350 860 L 347 862 L 349 872 L 353 873 L 351 880 L 355 892 L 360 894 L 360 904 L 366 906 L 364 911 L 369 913 L 368 918 L 374 927 L 379 928 L 378 933 L 387 939 L 389 949 L 386 970 L 388 1003 L 381 1005 L 380 1014 L 374 1016 L 376 1021 L 372 1028 L 368 1028 L 364 1038 L 367 1039 L 365 1049 L 360 1050 L 358 1059 L 361 1060 L 360 1072 L 356 1073 L 356 1085 L 360 1086 L 361 1097 L 358 1098 L 363 1100 L 363 1104 L 360 1105 L 366 1109 L 365 1118 L 369 1118 L 374 1127 L 372 1134 L 376 1134 L 381 1142 L 383 1158 L 380 1159 L 381 1164 L 386 1166 L 386 1172 L 383 1173 L 387 1174 L 387 1178 L 384 1180 L 386 1189 L 391 1191 L 391 1197 L 388 1198 L 393 1202 L 393 1208 L 390 1210 L 395 1212 L 396 1227 L 393 1228 L 396 1228 L 398 1242 L 394 1243 L 398 1244 L 398 1261 L 395 1262 L 396 1284 L 387 1294 L 385 1308 L 382 1309 L 376 1326 L 360 1340 L 349 1356 L 352 1359 L 352 1370 L 359 1376 L 400 1376 L 409 1380 L 413 1376 L 430 1374 L 435 1358 L 443 1358 L 444 1361 L 445 1356 L 460 1355 L 457 1345 L 462 1341 L 458 1339 L 456 1311 L 459 1310 L 456 1309 L 458 1304 L 449 1300 L 450 1281 L 445 1272 L 446 1241 L 450 1240 L 447 1238 L 447 1229 L 451 1228 L 448 1219 L 452 1215 L 449 1214 L 449 1210 L 453 1206 L 450 1204 L 451 1197 L 454 1196 L 452 1188 L 455 1187 L 453 1174 L 457 1172 L 455 1166 L 458 1165 L 455 1164 L 455 1160 L 459 1159 L 456 1158 L 456 1151 L 461 1147 L 457 1146 L 457 1136 L 470 1126 L 468 1121 L 472 1116 L 476 1116 L 475 1108 L 480 1107 L 482 1099 L 479 1098 L 479 1093 L 483 1092 L 483 1077 L 479 1076 L 480 1062 L 476 1061 L 477 1052 L 457 1002 L 475 978 L 479 963 L 476 962 L 479 943 L 484 941 L 480 940 L 483 923 L 488 922 L 485 921 L 490 910 L 487 909 L 487 890 L 491 889 L 487 888 L 487 882 L 491 878 L 499 846 L 501 789 L 505 786 L 503 781 L 506 780 L 503 779 L 503 775 L 507 771 L 504 769 L 504 755 L 507 754 L 503 753 L 503 746 L 506 744 L 502 743 L 505 736 L 501 735 L 501 730 L 513 727 L 520 730 L 520 734 L 516 735 L 519 736 L 519 741 L 515 742 L 518 744 L 518 750 L 514 751 L 517 754 L 517 766 L 514 770 L 518 771 L 518 778 L 515 779 L 519 780 L 520 791 L 517 792 L 520 793 L 520 832 L 524 859 L 521 860 L 522 864 L 526 865 L 524 871 L 528 883 L 529 880 L 534 881 L 534 901 L 531 902 L 535 907 L 535 911 L 532 912 L 535 914 L 534 925 L 539 927 L 542 936 L 544 956 L 541 957 L 545 958 L 544 968 L 548 969 L 553 984 L 551 990 L 556 999 L 560 1000 L 558 1015 L 550 1035 L 552 1040 L 547 1043 L 544 1051 L 546 1056 L 542 1057 L 539 1068 L 542 1069 L 541 1090 L 538 1093 L 541 1094 L 541 1108 L 548 1114 L 546 1119 L 557 1128 L 561 1155 L 564 1155 L 566 1165 L 563 1166 L 567 1167 L 565 1179 L 568 1180 L 568 1204 L 571 1205 L 573 1217 L 570 1226 L 574 1227 L 574 1237 L 571 1239 L 575 1240 L 576 1247 L 572 1256 L 576 1257 L 577 1272 L 571 1273 L 572 1279 L 568 1280 L 568 1284 L 572 1286 L 572 1300 L 562 1308 L 565 1309 L 562 1352 L 572 1359 L 577 1357 L 578 1361 L 580 1358 L 586 1358 L 588 1371 L 603 1376 L 644 1377 L 645 1380 L 649 1375 L 660 1376 L 661 1379 L 663 1374 L 669 1375 L 671 1350 L 645 1324 L 635 1296 L 627 1286 L 626 1270 L 623 1266 L 624 1221 L 628 1201 L 633 1198 L 631 1186 L 633 1179 L 637 1178 L 634 1177 L 634 1171 L 639 1168 L 639 1147 L 644 1145 L 641 1144 L 641 1139 L 648 1135 L 647 1126 L 651 1118 L 656 1117 L 658 1112 L 655 1111 L 659 1092 L 664 1089 L 661 1088 L 660 1062 L 663 1061 L 658 1058 L 656 1046 L 659 1045 L 655 1044 L 655 1033 L 650 1021 L 645 1020 L 646 1015 L 638 1001 L 634 1000 L 634 993 L 639 990 L 634 987 L 635 972 L 639 971 L 634 970 L 633 939 L 641 935 L 640 930 L 646 928 L 655 914 L 653 909 L 659 897 L 664 896 L 662 890 L 667 888 L 664 887 L 666 877 L 671 876 L 668 869 L 670 860 L 674 858 L 671 857 L 671 851 L 675 850 L 672 848 L 675 833 L 672 832 L 671 813 L 674 809 L 670 808 L 669 791 L 672 790 L 668 789 L 671 782 L 660 730 L 653 710 L 650 710 L 646 703 L 647 697 L 642 690 L 633 656 L 624 650 L 621 639 L 623 633 L 619 632 L 616 621 L 618 614 L 610 607 L 612 596 L 608 579 L 611 578 L 611 567 L 615 566 L 618 556 L 616 551 L 619 550 L 616 549 L 616 529 L 619 528 L 620 516 L 617 515 L 617 511 L 628 496 L 649 477 L 658 461 L 663 460 L 662 452 L 670 449 L 676 475 L 682 483 L 680 489 L 694 507 L 688 521 L 688 530 L 684 531 L 681 540 L 681 568 L 685 570 L 684 577 L 688 578 L 692 591 L 699 596 L 699 601 L 703 602 L 708 614 L 709 627 L 712 628 L 712 659 L 709 660 L 707 672 L 710 678 L 706 679 L 704 688 L 699 689 L 695 698 L 690 700 L 683 711 L 684 754 L 690 752 L 691 760 L 697 765 L 705 763 L 706 767 L 717 768 L 718 771 L 723 771 L 724 768 L 731 768 L 732 771 L 737 764 L 743 764 L 744 767 L 747 763 L 754 764 L 766 737 L 765 724 L 768 722 L 763 712 L 763 704 L 766 703 L 763 702 L 760 689 L 760 674 L 763 673 L 762 640 L 765 639 L 763 632 L 766 631 L 765 621 L 768 620 L 765 609 L 770 608 L 773 602 L 771 597 L 776 596 L 775 587 L 780 586 L 777 585 L 777 580 L 782 577 L 780 559 L 784 553 L 775 506 L 764 494 L 765 452 L 768 451 L 764 450 L 764 444 L 767 443 L 763 442 L 762 433 L 764 429 L 768 429 L 769 424 L 766 422 L 766 418 L 770 417 L 769 400 L 766 399 L 768 394 L 753 363 L 738 351 L 737 331 L 740 330 L 732 318 L 732 310 L 727 309 L 722 298 L 707 288 L 685 282 L 669 284 L 668 281 L 661 281 L 660 284 L 642 284 L 641 279 L 615 265 L 614 262 Z M 463 112 L 460 130 L 463 131 L 462 142 L 466 149 L 472 139 L 473 119 L 481 113 L 485 113 L 486 116 L 488 112 L 500 115 L 505 111 L 514 111 L 515 114 L 526 112 L 527 115 L 534 113 L 535 116 L 543 117 L 547 120 L 545 125 L 549 130 L 550 148 L 554 149 L 554 145 L 557 144 L 555 138 L 558 137 L 556 131 L 559 130 L 558 112 L 541 91 L 523 86 L 522 83 L 517 85 L 515 82 L 504 82 L 503 85 L 474 93 L 474 97 Z"></path></g>
+<g fill="#e8dcdc" fill-rule="evenodd"><path d="M 448 1039 L 460 1077 L 462 1096 L 459 1071 Z M 575 1032 L 570 1043 L 561 1073 L 558 1095 L 558 1110 L 558 1097 L 562 1071 L 568 1049 Z M 636 1010 L 646 1079 L 646 1117 L 646 1074 Z M 457 922 L 454 930 L 443 944 L 455 929 Z M 563 920 L 568 932 L 579 945 L 567 930 Z M 579 828 L 573 842 L 565 870 L 562 891 L 562 914 L 562 895 L 564 877 L 568 859 Z M 440 824 L 451 854 L 456 873 L 459 893 L 459 911 L 459 891 L 456 871 L 448 843 Z M 402 696 L 388 783 L 385 834 L 386 849 L 388 783 L 396 740 Z M 477 658 L 493 660 L 527 660 L 545 658 Z M 499 440 L 474 443 L 460 448 L 479 442 Z M 409 438 L 390 450 L 371 472 L 392 449 Z M 364 414 L 365 427 L 362 434 L 355 442 L 367 427 L 365 427 Z M 664 402 L 661 405 L 656 416 L 656 429 L 666 443 L 656 428 L 656 416 L 661 405 Z M 717 395 L 724 442 L 724 466 L 723 429 Z M 486 232 L 489 253 L 492 262 L 506 290 L 492 261 L 488 247 Z M 501 83 L 486 87 L 475 93 L 468 100 L 461 113 L 460 126 L 465 153 L 460 153 L 458 155 L 457 168 L 462 181 L 468 187 L 469 193 L 469 224 L 467 237 L 434 247 L 417 254 L 391 269 L 376 281 L 330 284 L 322 286 L 307 293 L 298 300 L 290 310 L 282 329 L 279 348 L 269 362 L 257 383 L 252 406 L 252 419 L 256 435 L 252 462 L 254 492 L 246 508 L 241 524 L 237 552 L 240 582 L 244 593 L 252 607 L 259 648 L 259 671 L 255 703 L 253 739 L 265 762 L 276 767 L 283 766 L 291 771 L 306 771 L 315 765 L 320 766 L 333 756 L 337 750 L 336 728 L 338 714 L 330 700 L 313 679 L 313 672 L 310 659 L 310 632 L 313 610 L 330 588 L 336 577 L 339 567 L 339 541 L 328 510 L 341 488 L 350 450 L 352 435 L 352 393 L 350 370 L 358 368 L 362 370 L 362 381 L 364 390 L 369 401 L 377 413 L 392 427 L 411 436 L 433 437 L 472 424 L 482 422 L 509 421 L 510 469 L 507 471 L 473 478 L 447 480 L 443 471 L 444 439 L 441 453 L 441 477 L 424 476 L 415 472 L 405 461 L 405 451 L 400 466 L 399 485 L 402 496 L 407 505 L 414 512 L 421 516 L 434 517 L 447 515 L 453 522 L 449 545 L 450 556 L 453 563 L 460 571 L 463 591 L 470 617 L 469 619 L 439 615 L 436 612 L 426 592 L 412 574 L 405 556 L 403 512 L 399 505 L 371 478 L 364 468 L 357 450 L 362 467 L 368 477 L 398 507 L 402 514 L 402 547 L 404 558 L 411 574 L 411 593 L 409 602 L 405 607 L 394 652 L 392 655 L 388 657 L 383 677 L 361 729 L 352 772 L 348 801 L 347 856 L 351 878 L 358 898 L 365 912 L 383 938 L 385 949 L 382 975 L 384 1002 L 374 1017 L 362 1046 L 357 1070 L 357 1087 L 361 1106 L 369 1126 L 377 1140 L 393 1217 L 396 1251 L 396 1264 L 393 1269 L 392 1287 L 389 1291 L 376 1327 L 358 1343 L 350 1354 L 350 1372 L 351 1377 L 353 1378 L 418 1378 L 432 1372 L 437 1362 L 461 1353 L 462 1344 L 459 1330 L 458 1307 L 452 1296 L 452 1278 L 447 1271 L 449 1232 L 454 1183 L 461 1137 L 474 1119 L 479 1108 L 482 1093 L 482 1075 L 475 1048 L 462 1017 L 460 1004 L 469 991 L 476 972 L 489 912 L 489 891 L 494 878 L 502 846 L 504 809 L 503 788 L 506 775 L 506 750 L 503 733 L 505 731 L 516 731 L 517 739 L 515 750 L 515 773 L 518 787 L 517 814 L 519 845 L 525 872 L 529 885 L 532 889 L 533 915 L 544 966 L 553 993 L 561 1004 L 557 1021 L 542 1059 L 538 1080 L 539 1096 L 543 1112 L 552 1127 L 559 1135 L 567 1183 L 572 1230 L 574 1270 L 569 1278 L 570 1294 L 565 1300 L 563 1306 L 560 1354 L 584 1361 L 590 1372 L 603 1378 L 626 1380 L 671 1377 L 672 1356 L 666 1346 L 644 1324 L 635 1298 L 630 1289 L 628 1271 L 625 1265 L 625 1249 L 627 1223 L 644 1140 L 655 1118 L 663 1091 L 663 1065 L 660 1050 L 652 1027 L 636 1000 L 638 993 L 637 939 L 656 911 L 662 899 L 670 876 L 674 853 L 674 818 L 669 775 L 659 729 L 649 702 L 640 685 L 633 659 L 630 654 L 632 658 L 632 665 L 636 679 L 656 723 L 662 743 L 670 795 L 673 835 L 671 862 L 664 888 L 650 917 L 630 944 L 610 912 L 612 900 L 623 881 L 635 849 L 635 807 L 633 782 L 623 717 L 618 696 L 633 786 L 634 851 L 626 871 L 613 894 L 589 815 L 577 739 L 577 721 L 584 697 L 589 671 L 609 660 L 628 655 L 616 609 L 612 603 L 610 594 L 610 574 L 615 564 L 618 553 L 618 517 L 626 503 L 640 491 L 656 473 L 662 461 L 664 451 L 662 458 L 654 472 L 651 473 L 649 471 L 652 474 L 648 480 L 634 494 L 628 498 L 618 510 L 616 555 L 608 575 L 592 595 L 585 611 L 582 614 L 552 618 L 551 616 L 558 589 L 560 574 L 565 568 L 574 568 L 565 567 L 569 561 L 571 554 L 571 537 L 568 521 L 573 515 L 587 517 L 600 516 L 612 507 L 618 497 L 621 487 L 621 467 L 616 452 L 617 458 L 606 471 L 595 476 L 579 477 L 578 473 L 580 462 L 577 439 L 578 469 L 574 480 L 539 477 L 514 471 L 511 468 L 511 423 L 513 421 L 542 422 L 587 437 L 609 436 L 631 451 L 644 465 L 632 451 L 612 438 L 611 436 L 626 429 L 643 414 L 656 392 L 659 379 L 659 371 L 661 369 L 671 370 L 669 396 L 670 444 L 679 485 L 686 500 L 693 510 L 681 543 L 681 565 L 684 575 L 690 587 L 708 611 L 711 632 L 711 656 L 707 680 L 690 701 L 683 713 L 683 721 L 685 728 L 684 752 L 698 765 L 705 765 L 711 770 L 715 771 L 719 769 L 729 771 L 739 766 L 748 766 L 753 764 L 758 759 L 768 739 L 765 697 L 762 684 L 762 650 L 769 607 L 777 592 L 783 567 L 783 548 L 781 530 L 774 506 L 769 497 L 767 489 L 769 471 L 768 454 L 766 447 L 766 432 L 769 419 L 768 396 L 761 377 L 741 346 L 739 328 L 734 315 L 726 303 L 717 295 L 705 288 L 692 284 L 676 282 L 647 282 L 630 269 L 597 251 L 582 245 L 555 238 L 553 236 L 551 219 L 551 193 L 552 186 L 555 185 L 559 179 L 563 166 L 562 155 L 560 153 L 555 153 L 559 124 L 557 112 L 549 99 L 540 91 L 523 84 Z M 560 1351 L 562 1350 L 575 1355 L 582 1356 L 585 1359 L 584 1360 L 564 1354 Z M 460 1351 L 457 1354 L 441 1358 L 438 1360 L 436 1359 L 439 1356 L 459 1350 Z M 561 1348 L 563 1347 L 583 1354 L 578 1355 L 563 1350 Z M 455 1349 L 458 1347 L 460 1348 L 458 1350 Z M 454 1301 L 457 1307 L 460 1344 L 456 1347 L 437 1353 L 434 1368 L 429 1373 L 415 1378 L 404 1379 L 354 1377 L 351 1375 L 352 1360 L 359 1362 L 381 1364 L 418 1364 L 422 1362 L 429 1354 L 436 1330 L 446 1305 L 452 1300 Z M 568 1299 L 576 1306 L 586 1331 L 593 1355 L 599 1362 L 605 1364 L 642 1364 L 670 1360 L 670 1375 L 667 1377 L 613 1379 L 605 1378 L 591 1372 L 587 1365 L 585 1353 L 567 1348 L 561 1344 L 564 1324 L 564 1306 Z M 582 1290 L 591 1282 L 601 1278 L 615 1278 L 624 1282 L 632 1292 L 645 1327 L 671 1354 L 671 1358 L 665 1361 L 629 1364 L 609 1364 L 602 1363 L 598 1360 L 592 1351 L 586 1329 L 575 1304 Z M 440 1291 L 446 1302 L 446 1305 L 435 1330 L 429 1352 L 421 1362 L 378 1363 L 358 1361 L 351 1358 L 351 1353 L 377 1327 L 388 1295 L 396 1283 L 407 1278 L 422 1278 L 432 1283 Z M 394 1268 L 400 1264 L 424 1263 L 435 1265 L 445 1270 L 451 1279 L 450 1300 L 448 1301 L 445 1298 L 442 1291 L 434 1282 L 424 1277 L 407 1276 L 394 1282 Z M 563 1138 L 578 1154 L 579 1157 L 580 1191 L 584 1230 L 584 1264 L 578 1268 L 575 1266 L 575 1244 L 566 1166 L 562 1144 Z M 457 1138 L 458 1148 L 446 1243 L 445 1267 L 443 1268 L 437 1264 L 437 1235 L 441 1189 L 442 1155 Z M 635 1004 L 646 1020 L 654 1038 L 660 1061 L 662 1084 L 655 1111 L 642 1138 L 626 1215 L 624 1236 L 624 1265 L 627 1268 L 629 1282 L 627 1283 L 620 1278 L 612 1276 L 603 1276 L 595 1278 L 587 1282 L 582 1287 L 573 1302 L 570 1298 L 570 1279 L 577 1269 L 598 1263 L 621 1264 L 601 1261 L 618 1201 L 608 1232 L 601 1260 L 599 1262 L 586 1264 L 582 1203 L 582 1179 L 580 1165 L 584 1096 L 582 1125 L 578 1153 L 551 1122 L 543 1107 L 540 1093 L 540 1078 L 542 1066 L 563 1006 L 576 1018 L 585 1038 L 588 1049 L 586 1081 L 589 1050 L 585 1033 L 580 1021 L 581 1020 L 588 1026 L 617 1039 L 616 1150 L 618 1151 L 618 1037 L 629 1011 Z M 387 1003 L 400 1029 L 403 1038 L 403 1152 L 405 1150 L 404 1039 L 410 1035 L 432 1027 L 440 1020 L 441 1021 L 437 1029 L 433 1043 L 433 1049 L 438 1031 L 443 1020 L 457 1006 L 459 1008 L 460 1014 L 467 1031 L 480 1073 L 480 1096 L 475 1112 L 464 1129 L 443 1153 L 440 1141 L 437 1102 L 441 1159 L 439 1181 L 437 1248 L 435 1265 L 422 1262 L 420 1260 L 416 1242 L 404 1204 L 420 1261 L 407 1262 L 401 1264 L 397 1263 L 396 1224 L 381 1145 L 368 1117 L 360 1094 L 359 1071 L 363 1051 L 371 1028 L 383 1008 L 384 1015 L 379 1039 L 374 1078 L 375 1119 L 375 1074 L 384 1011 Z M 432 970 L 435 973 L 431 1016 L 432 1026 L 405 1036 L 397 995 L 396 977 L 400 976 L 409 979 L 419 979 L 433 976 L 419 979 L 410 979 L 397 976 L 396 971 L 403 968 L 425 968 Z M 589 970 L 600 967 L 613 967 L 623 969 L 625 971 L 624 996 L 619 1017 L 617 1035 L 615 1037 L 596 1029 L 590 1025 L 586 977 L 592 976 L 596 978 L 613 978 L 621 976 L 613 978 L 597 978 L 588 976 L 586 972 Z M 387 943 L 393 951 L 395 991 L 400 1016 L 399 1025 L 389 1006 L 385 993 L 384 979 Z M 634 942 L 636 993 L 633 1003 L 621 1024 L 620 1021 L 627 980 L 627 956 L 628 950 Z M 541 939 L 552 953 L 562 959 L 569 961 L 578 961 L 582 958 L 583 959 L 589 1021 L 588 1025 L 569 1009 L 557 996 L 551 984 L 544 961 L 540 942 Z M 480 939 L 480 948 L 472 979 L 468 989 L 462 998 L 433 1025 L 432 1020 L 435 999 L 437 961 L 439 959 L 445 962 L 452 961 L 464 956 L 476 945 Z M 608 913 L 628 945 L 626 955 L 626 967 L 624 969 L 615 967 L 599 967 L 586 971 L 584 967 L 584 953 L 593 935 Z M 412 913 L 422 926 L 436 951 L 437 965 L 435 972 L 429 969 L 419 967 L 407 967 L 397 970 L 396 969 L 393 948 L 394 943 Z M 520 798 L 526 817 L 538 844 L 538 850 L 533 868 L 533 877 L 531 881 L 528 877 L 520 843 L 518 817 L 518 801 Z M 502 796 L 503 811 L 501 840 L 496 865 L 490 882 L 488 880 L 488 870 L 482 849 L 482 844 L 497 812 L 500 798 Z M 751 743 L 744 757 L 735 767 L 730 769 L 720 768 L 737 744 L 747 742 Z M 735 745 L 718 768 L 713 769 L 707 765 L 722 743 L 725 741 L 730 741 Z M 269 743 L 272 742 L 283 744 L 291 754 L 285 744 L 290 741 L 297 742 L 301 745 L 313 765 L 305 770 L 302 769 L 297 763 L 300 768 L 299 769 L 289 769 L 282 764 L 269 745 Z M 763 740 L 764 743 L 755 760 L 749 764 L 742 765 L 741 763 L 750 749 L 757 742 Z M 257 740 L 261 741 L 267 747 L 268 746 L 280 764 L 279 766 L 271 764 L 265 759 L 256 741 Z M 695 739 L 695 746 L 687 754 L 684 749 L 685 740 Z M 723 739 L 724 740 L 719 744 L 714 753 L 704 764 L 697 763 L 690 755 L 706 733 L 718 739 Z M 299 739 L 305 738 L 314 733 L 330 754 L 329 757 L 323 763 L 316 764 L 301 743 L 298 741 Z M 574 728 L 576 733 L 576 746 L 581 783 L 587 814 L 611 893 L 611 898 L 607 911 L 601 918 L 587 941 L 581 957 L 577 960 L 571 960 L 561 957 L 552 951 L 546 944 L 539 932 L 533 902 L 535 866 L 564 757 Z M 447 728 L 460 770 L 474 826 L 485 863 L 488 885 L 488 903 L 483 928 L 476 942 L 464 954 L 459 957 L 444 960 L 441 957 L 429 933 L 414 911 L 410 899 L 410 893 L 434 815 L 444 756 L 445 730 Z M 685 716 L 696 717 L 703 726 L 704 732 L 698 741 L 696 738 L 687 739 L 685 737 Z M 329 715 L 337 717 L 335 731 L 336 751 L 334 754 L 328 749 L 325 741 L 326 739 L 332 739 L 323 737 L 325 741 L 324 744 L 316 732 L 316 726 L 318 724 L 320 734 L 319 724 L 323 718 Z M 684 713 L 691 702 L 710 679 L 721 676 L 738 676 L 739 678 L 742 677 L 752 682 L 762 690 L 767 736 L 763 739 L 754 742 L 751 740 L 747 740 L 746 738 L 744 741 L 736 743 L 728 738 L 728 734 L 726 737 L 722 738 L 713 735 L 708 730 L 706 715 L 704 711 L 700 712 L 703 711 L 705 713 L 707 724 L 706 731 L 702 721 L 696 715 L 685 715 Z M 337 713 L 336 715 L 328 714 L 323 716 L 316 724 L 315 721 L 317 711 L 315 719 L 316 729 L 313 729 L 314 725 L 313 730 L 303 738 L 294 738 L 292 735 L 292 738 L 288 741 L 277 742 L 273 740 L 262 741 L 254 736 L 257 716 L 258 691 L 262 687 L 279 677 L 300 676 L 311 679 L 323 695 L 331 703 Z M 434 673 L 466 700 L 502 734 L 505 755 L 505 772 L 503 787 L 495 813 L 481 841 L 433 678 Z M 587 672 L 588 675 L 585 688 L 566 749 L 550 807 L 545 820 L 542 834 L 539 840 L 527 816 L 520 796 L 516 765 L 519 734 L 565 689 Z M 395 655 L 419 664 L 431 671 L 444 722 L 444 737 L 439 777 L 433 810 L 421 855 L 408 894 L 400 882 L 391 864 L 388 854 L 394 874 L 408 899 L 411 908 L 408 916 L 392 943 L 390 944 L 371 918 L 359 894 L 354 880 L 349 856 L 349 818 L 352 783 L 360 737 L 370 710 L 385 678 L 389 664 L 389 659 L 392 655 Z M 581 617 L 549 657 L 537 684 L 529 717 L 526 723 L 519 730 L 501 730 L 491 721 L 484 690 L 472 659 L 461 644 L 438 618 L 443 617 L 485 623 L 528 623 L 560 620 L 580 616 Z M 255 614 L 257 615 L 272 639 L 279 670 L 279 675 L 277 677 L 268 681 L 262 686 L 260 685 L 259 644 L 254 616 Z M 766 613 L 767 616 L 764 627 L 761 654 L 760 686 L 742 675 L 742 670 L 746 649 L 750 637 Z M 613 607 L 615 609 L 626 653 L 606 659 L 586 669 L 557 693 L 530 720 L 529 718 L 540 680 L 549 660 L 555 651 L 586 615 Z M 408 607 L 413 610 L 434 616 L 465 652 L 477 674 L 483 689 L 488 712 L 491 719 L 490 720 L 435 671 L 413 659 L 394 653 L 400 635 L 404 616 Z M 608 577 L 611 605 L 609 607 L 587 612 L 586 611 L 594 594 Z M 413 577 L 431 602 L 435 611 L 434 614 L 414 608 L 409 604 L 412 592 Z M 463 571 L 487 575 L 510 575 L 510 585 L 505 586 L 510 587 L 509 622 L 474 620 L 472 618 L 463 584 Z M 513 522 L 520 525 L 536 528 L 554 527 L 564 523 L 567 525 L 570 539 L 570 555 L 563 569 L 560 572 L 556 571 L 560 573 L 548 619 L 515 622 L 511 620 L 511 588 L 513 586 L 511 585 L 511 575 L 538 575 L 554 572 L 533 575 L 522 575 L 513 573 L 511 571 L 511 525 Z M 510 523 L 510 571 L 508 573 L 492 575 L 461 571 L 455 565 L 450 552 L 452 532 L 455 523 L 471 528 L 485 528 L 508 522 Z M 301 504 L 316 510 L 327 511 L 336 534 L 339 546 L 339 562 L 335 576 L 324 595 L 314 607 L 313 601 L 316 578 L 316 558 L 312 539 L 300 506 Z M 720 503 L 721 505 L 713 525 L 705 558 L 705 581 L 708 606 L 707 608 L 692 588 L 685 575 L 681 559 L 681 549 L 693 511 L 704 510 Z M 677 475 L 678 474 L 687 485 L 697 493 L 704 497 L 719 502 L 715 505 L 705 508 L 693 508 L 682 491 Z M 344 475 L 338 493 L 327 509 L 315 508 L 302 503 L 304 501 L 321 495 L 327 491 L 340 478 L 342 474 Z M 743 472 L 762 490 L 768 499 L 753 513 L 741 530 L 735 547 L 733 572 L 741 615 L 734 576 L 734 558 L 736 546 L 740 534 L 748 520 L 758 508 L 768 499 L 775 511 L 781 537 L 781 565 L 775 591 L 768 605 L 751 630 L 746 641 L 741 661 L 740 674 L 723 674 L 710 677 L 709 675 L 712 658 L 712 632 L 707 598 L 707 556 L 720 510 L 728 494 L 741 473 Z M 278 472 L 288 486 L 299 507 L 307 529 L 314 556 L 314 590 L 309 630 L 309 661 L 312 672 L 311 677 L 298 674 L 281 674 L 280 662 L 274 638 L 251 602 L 246 592 L 240 571 L 240 534 L 245 513 L 250 502 L 253 500 L 269 515 L 275 523 L 285 546 L 287 556 L 287 575 L 279 618 L 287 581 L 287 551 L 283 537 L 278 527 L 271 517 L 253 500 L 253 498 L 259 490 Z M 511 472 L 514 471 L 521 474 L 550 480 L 573 481 L 575 483 L 574 506 L 568 518 L 559 524 L 550 526 L 532 526 L 513 521 L 511 515 Z M 510 472 L 510 519 L 508 521 L 487 526 L 469 526 L 457 522 L 450 515 L 446 504 L 447 481 L 468 480 L 491 476 L 506 471 Z M 617 460 L 620 466 L 621 481 L 618 493 L 612 504 L 604 512 L 596 516 L 575 514 L 574 509 L 576 502 L 576 480 L 578 478 L 590 478 L 600 476 L 609 471 Z M 403 460 L 413 472 L 420 476 L 428 478 L 442 478 L 445 480 L 444 497 L 447 512 L 446 514 L 437 516 L 424 516 L 417 513 L 409 505 L 402 493 L 399 482 L 400 468 Z M 259 437 L 266 445 L 274 450 L 278 470 L 257 491 L 254 476 L 254 461 L 257 438 Z M 762 436 L 764 438 L 767 463 L 766 482 L 764 491 L 743 469 L 746 451 L 755 444 Z M 674 370 L 696 374 L 708 378 L 714 382 L 714 386 L 715 381 L 729 390 L 740 405 L 744 417 L 746 430 L 745 452 L 742 467 L 739 475 L 725 496 L 722 499 L 721 497 L 720 500 L 709 497 L 695 489 L 684 478 L 677 466 L 671 439 L 670 415 L 672 373 Z M 347 370 L 349 375 L 350 389 L 350 433 L 348 451 L 344 466 L 336 479 L 322 492 L 307 499 L 301 500 L 299 496 L 298 484 L 298 439 L 301 414 L 307 385 L 302 406 L 298 434 L 298 499 L 280 471 L 276 453 L 275 430 L 280 408 L 288 394 L 301 384 L 307 381 L 308 383 L 311 379 L 322 375 Z M 658 365 L 659 369 L 657 383 L 649 402 L 645 408 L 628 425 L 613 433 L 601 436 L 590 436 L 550 423 L 537 421 L 513 421 L 511 418 L 511 407 L 513 405 L 576 418 L 598 419 L 611 415 L 626 407 L 639 395 L 646 384 L 651 370 L 652 361 L 654 359 Z M 362 367 L 367 359 L 369 361 L 369 366 L 373 379 L 381 394 L 395 407 L 415 417 L 422 419 L 444 418 L 509 405 L 510 420 L 476 422 L 433 436 L 421 436 L 407 433 L 389 422 L 375 407 L 364 385 Z M 280 352 L 283 366 L 292 388 L 285 395 L 279 406 L 274 424 L 274 446 L 272 447 L 261 438 L 257 431 L 254 422 L 253 407 L 254 396 L 258 384 L 269 365 Z M 741 351 L 760 377 L 767 396 L 766 426 L 761 436 L 750 446 L 747 445 L 748 430 L 744 411 L 738 398 L 730 389 L 730 385 L 737 369 Z M 511 296 L 513 294 L 563 282 L 597 285 L 681 283 L 697 286 L 714 294 L 726 306 L 734 319 L 739 339 L 739 351 L 736 366 L 727 387 L 710 377 L 697 372 L 661 368 L 638 326 L 634 307 L 634 294 L 669 294 L 680 305 L 691 320 L 697 334 L 699 343 L 698 370 L 700 358 L 700 344 L 697 331 L 689 315 L 670 294 L 635 293 L 634 290 L 634 315 L 624 304 L 620 302 L 594 298 L 613 301 L 623 306 L 632 317 L 652 355 L 651 365 L 647 377 L 640 390 L 629 402 L 615 411 L 598 417 L 567 415 L 516 404 L 512 402 L 512 349 L 525 346 L 515 348 L 512 347 L 512 306 L 542 299 L 574 296 L 545 298 L 527 301 L 514 305 L 511 304 Z M 510 295 L 509 305 L 476 298 L 450 297 L 481 299 L 506 304 L 510 306 L 510 347 L 507 348 L 510 349 L 510 401 L 505 404 L 445 416 L 422 417 L 400 408 L 383 393 L 374 378 L 370 365 L 369 355 L 395 309 L 405 302 L 425 298 L 404 301 L 396 305 L 387 316 L 386 311 L 388 292 L 356 293 L 352 294 L 336 310 L 331 317 L 324 333 L 322 342 L 322 360 L 323 339 L 329 322 L 337 310 L 352 294 L 388 294 L 385 321 L 362 366 L 359 368 L 324 372 L 308 378 L 295 386 L 289 376 L 284 362 L 282 340 L 284 329 L 291 312 L 306 295 L 324 286 L 342 283 L 423 285 L 459 282 Z M 554 240 L 558 239 L 605 256 L 630 270 L 646 281 L 644 283 L 587 284 L 566 282 L 564 280 L 559 266 Z M 467 240 L 462 265 L 458 277 L 454 282 L 431 284 L 382 283 L 376 281 L 402 263 L 424 252 L 464 239 Z M 470 202 L 471 201 L 484 217 L 498 227 L 523 227 L 529 223 L 545 207 L 549 201 L 554 249 L 559 270 L 563 280 L 560 282 L 519 292 L 517 291 L 532 259 L 535 232 L 534 248 L 531 261 L 515 293 L 508 294 L 498 290 L 459 281 L 458 279 L 462 270 L 468 240 L 470 222 Z M 559 153 L 562 159 L 562 166 L 559 177 L 554 184 L 553 177 L 555 156 Z M 477 116 L 510 112 L 533 114 L 542 116 L 545 119 L 547 136 L 553 155 L 520 157 L 554 157 L 554 169 L 551 191 L 546 204 L 523 226 L 498 226 L 488 219 L 474 204 L 470 195 L 468 183 L 467 184 L 464 182 L 458 168 L 458 156 L 461 153 L 465 156 L 467 181 L 466 156 L 472 136 L 474 118 Z M 462 111 L 468 101 L 476 93 L 487 87 L 502 83 L 517 83 L 529 86 L 542 93 L 549 100 L 557 113 L 558 131 L 555 151 L 553 151 L 549 140 L 546 120 L 544 116 L 517 112 L 490 113 L 475 116 L 473 119 L 471 135 L 466 151 L 461 130 Z"></path></g>`;
+
+// Approximate pixel centers of each muscle group in the 1024x1536 viewBox
+const MUSCLE_LOCI = {
+  chest:     [{ cx: 420, cy: 420, rx: 120, ry: 90 }, { cx: 600, cy: 420, rx: 120, ry: 90 }],
+  back:      [{ cx: 330, cy: 540, rx: 90,  ry: 140 }, { cx: 690, cy: 540, rx: 90, ry: 140 }],
+  shoulders: [{ cx: 310, cy: 370, rx: 95,  ry: 85 }, { cx: 710, cy: 370, rx: 95,  ry: 85 }],
+  arms:      [{ cx: 240, cy: 560, rx: 80, ry: 150 }, { cx: 780, cy: 560, rx: 80, ry: 150 }],
+  core:      [{ cx: 510, cy: 720, rx: 140, ry: 160 }],
+  legs:      [{ cx: 430, cy: 1080, rx: 110, ry: 220 }, { cx: 590, cy: 1080, rx: 110, ry: 220 }],
+};
+
+function RitualFigure({ intensity = {}, size = 180 }) {
+  const v = (k) => Math.min(1, Math.max(0, intensity[k] ?? 0));
+
+  return (
+    <svg
+      width={size}
+      height={size * 1.5}
+      viewBox="0 0 1024 1536"
+      style={{ display: 'block' }}
+    >
+      <defs>
+        <filter id="emberBlur" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="28" />
+        </filter>
+        <radialGradient id="emberGrad">
+          <stop offset="0%" stopColor="rgba(255,90,60,1)" />
+          <stop offset="60%" stopColor="rgba(180,40,30,0.5)" />
+          <stop offset="100%" stopColor="rgba(139,30,30,0)" />
+        </radialGradient>
+      </defs>
+
+      {/* ritual ring */}
+      <circle cx="512" cy="768" r="720" fill="none" stroke="rgba(232,228,218,0.08)" strokeWidth="2" />
+      <circle cx="512" cy="768" r="700" fill="none" stroke="rgba(232,228,218,0.05)" strokeWidth="2" />
+
+      {/* uploaded figure */}
+      <g dangerouslySetInnerHTML={{ __html: __FIGURE_SVG }} />
+
+      {/* ember glow overlays — screen blend so they add light without darkening */}
+      <g style={{ mixBlendMode: 'screen' }}>
+        {Object.entries(MUSCLE_LOCI).map(([group, loci]) => {
+          const i = v(group);
+          if (i < 0.05) return null;
+          return loci.map((loc, idx) => (
+            <ellipse
+              key={group + idx}
+              cx={loc.cx}
+              cy={loc.cy}
+              rx={loc.rx}
+              ry={loc.ry}
+              fill="url(#emberGrad)"
+              opacity={0.25 + i * 0.75}
+              filter="url(#emberBlur)"
+            />
+          ));
+        })}
+      </g>
+    </svg>
+  );
+}
+
+window.RitualFigure = RitualFigure;
+
+// Home.jsx — the altar. Ritual home screen.
+
+function HomeScreen({ onOpen }) {
+  // Pulled from the fallback seed data of the source repo
+  const history = [
+    { n: 1, date: '01 APR 2026', label: 'training the first',  total: 2340, ember: 0.2 },
+    { n: 2, date: '07 APR 2026', label: 'training the second', total: 2880, ember: 0.5 },
+    { n: 3, date: '11 APR 2026', label: 'training the third',  total: 3250, ember: 0.85 },
+  ];
+  const last = history[history.length - 1];
+  const nextNum = history.length + 1;
+  const daysSince = 9;  // April 20 - April 11
+
+  // Heatmap: chest(bench), back(lat/row), shoulders(press), arms(biceps), legs(press/ext), core(raise)
+  const intensity = {
+    chest: 0.92,
+    back: 0.55,
+    shoulders: 0.48,
+    arms: 0.70,
+    legs: 0.62,
+    core: 0.40,
+  };
+
+  // PRs — "carved sigils"
+  const prs = [
+    { name: 'BENCH',     value: '30', unit: 'КГ', sets: 'ПР · 3' },
+    { name: 'LAT·PULL',  value: '6',  unit: 'ПЛ', sets: 'ПР · 2' },
+    { name: 'BICEPS',    value: '15', unit: 'КГ', sets: 'ПР · 3' },
+    { name: 'LEG·EXT',   value: '15', unit: 'КГ', sets: 'ПР · 3' },
+  ];
+
+  // Liturgical calendar (month)
+  const days = Array.from({ length: 30 }, (_, i) => {
+    const d = i + 1;
+    const worked = [1, 7, 11].includes(d);
+    const today = d === 20;
+    return { d, worked, today };
+  });
+
+  // Roman numeral
+  const roman = (n) => {
+    const map = [[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];
+    let r = '', x = n;
+    for (const [v, s] of map) { while (x >= v) { r += s; x -= v; } }
+    return r;
+  };
+
+  return (
+    <div className="ritual-scroll" style={{
+      height: '100%',
+      overflowY: 'auto',
+      background: 'var(--void)',
+      paddingBottom: 90,
+    }}>
+      {/* ═══════════════ I. THE VOID ABOVE ═══════════════ */}
+      <div style={{ height: 110, position: 'relative' }}>
+        {/* hairline — horizon */}
+        <div style={{ position: 'absolute', top: 70, left: 24, right: 24, height: 1, background: 'rgba(232,228,218,0.15)' }} />
+        {/* tiny cipher — top left */}
+        <div className="mono rise" style={{ position: 'absolute', top: 78, left: 24, fontSize: 9, color: 'var(--bone-dim)' }}>
+          20 · APR · 2026
+        </div>
+        {/* session sigil — top right */}
+        <div className="rise" style={{ position: 'absolute', top: 78, right: 24, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span className="cross-sm" style={{ color: 'var(--ember)' }} />
+          <span className="mono" style={{ fontSize: 9, color: 'var(--bone-dim)' }}>SESSION · {nextNum}</span>
+        </div>
+      </div>
+
+      {/* ═══════════════ II. THE TITLE — FRAKTUR ═══════════════ */}
+      <div className="rise rise-2" style={{ padding: '0 24px', textAlign: 'center', marginTop: 8 }}>
+        <div className="fraktur" style={{
+          fontSize: 72,
+          lineHeight: 0.88,
+          color: 'var(--bone)',
+          letterSpacing: '0.02em',
+        }}>
+          Mÿ Gÿm
+        </div>
+        <div style={{ margin: '18px auto 0', width: 48, height: 1, background: 'var(--bone)' }} />
+        <div className="kaps-sm rise rise-3" style={{ marginTop: 14, color: 'var(--bone-dim)' }}>
+          a liturgy of iron · full body
+        </div>
+      </div>
+
+      {/* ═══════════════ III. SINCE THE LAST OFFERING ═══════════════ */}
+      <div className="rise rise-3" style={{ padding: '48px 24px 0', textAlign: 'center' }}>
+        <div className="kaps-sm" style={{ color: 'var(--ash)' }}>days since last rite</div>
+        <div style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 500, fontSize: 108, lineHeight: 0.9, marginTop: 10, color: 'var(--ember)', fontFeatureSettings: '"onum"' }}>
+          {daysSince}
+        </div>
+        <div className="script" style={{ fontSize: 13, color: 'var(--bone-dim)', marginTop: 12, fontStyle: 'italic' }}>
+          ― nine days in exile from the altar
+        </div>
+      </div>
+
+      {/* ═══════════════ IV. THE SACRAMENT BUTTON ═══════════════ */}
+      <div className="rise rise-4" style={{ padding: '40px 24px 0' }}>
+        <div
+          className="press"
+          onClick={() => onOpen('active')}
+          style={{
+            position: 'relative',
+            padding: '32px 20px',
+            border: '1px solid var(--bone)',
+            background: 'var(--void)',
+            textAlign: 'center',
+            overflow: 'hidden',
+          }}
+        >
+          {/* corner marks */}
+          <div style={{ position: 'absolute', top: 6, left: 6, width: 10, height: 10, borderLeft: '1px solid var(--bone)', borderTop: '1px solid var(--bone)' }} />
+          <div style={{ position: 'absolute', top: 6, right: 6, width: 10, height: 10, borderRight: '1px solid var(--bone)', borderTop: '1px solid var(--bone)' }} />
+          <div style={{ position: 'absolute', bottom: 6, left: 6, width: 10, height: 10, borderLeft: '1px solid var(--bone)', borderBottom: '1px solid var(--bone)' }} />
+          <div style={{ position: 'absolute', bottom: 6, right: 6, width: 10, height: 10, borderRight: '1px solid var(--bone)', borderBottom: '1px solid var(--bone)' }} />
+
+          <div className="kaps-sm" style={{ color: 'var(--ash)' }}>enter the rite</div>
+          <div className="fraktur" style={{ fontSize: 44, lineHeight: 0.9, marginTop: 14, color: 'var(--bone)' }}>
+            Begin
+          </div>
+          <div className="script ember-pulse" style={{ fontSize: 13, color: 'var(--ember-dim)', marginTop: 10, fontStyle: 'italic' }}>
+            — lift, that the iron may know thee
+          </div>
+        </div>
+        {/* bodyweight — whisper option */}
+        <div
+          className="press"
+          onClick={() => onOpen('active')}
+          style={{
+            marginTop: 10,
+            textAlign: 'center',
+            padding: '14px',
+            border: '1px solid var(--bone-faint)',
+            color: 'var(--bone-dim)',
+          }}
+        >
+          <span className="kaps-sm">or · without the altar · bodyweight</span>
+        </div>
+      </div>
+
+      {/* ═══════════════ V. THE BODY — ANATOMICAL ENGRAVING ═══════════════ */}
+      <div className="rise rise-4" style={{ padding: '64px 0 0', position: 'relative' }}>
+        <div style={{ padding: '0 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
+          <div className="kaps-sm" style={{ color: 'var(--bone-dim)' }}>figura · anatomica</div>
+          <div className="mono" style={{ fontSize: 9, color: 'var(--ash)' }}>7 · DAYS</div>
+        </div>
+        <div className="rule-dim" style={{ margin: '0 24px' }} />
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: 10, padding: '20px 16px 0', alignItems: 'start' }}>
+          {/* left legend */}
+          <div style={{ paddingTop: 18, textAlign: 'right' }}>
+            <LegendRow name="PECTUS"      ru="грудь"      v={intensity.chest} />
+            <LegendRow name="DORSUM"      ru="спина"      v={intensity.back} />
+            <LegendRow name="HUMERI"      ru="плечи"      v={intensity.shoulders} />
+          </div>
+
+          {/* figure */}
+          <div style={{ display: 'flex', justifyContent: 'center', position: 'relative' }}>
+            <RitualFigure intensity={intensity} size={150} />
+          </div>
+
+          {/* right legend */}
+          <div style={{ paddingTop: 18 }}>
+            <LegendRow name="BRACHIUM"  ru="руки"   v={intensity.arms} align="left" />
+            <LegendRow name="ABDOMEN"   ru="пресс"  v={intensity.core} align="left" />
+            <LegendRow name="CRUS"      ru="ноги"   v={intensity.legs} align="left" />
+          </div>
+        </div>
+
+        {/* script under figure */}
+        <div className="script" style={{ textAlign: 'center', padding: '12px 40px 0', fontSize: 12, color: 'var(--bone-dim)', fontStyle: 'italic', lineHeight: 1.4 }}>
+          that which bleedeth, groweth.<br/>
+          <span style={{ color: 'var(--ash)', fontSize: 10 }}>― sum of offerings, seven days</span>
+        </div>
+      </div>
+
+      {/* ═══════════════ VI. LITURGICAL CALENDAR ═══════════════ */}
+      <div className="rise rise-5" style={{ padding: '56px 24px 0' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 14 }}>
+          <div className="kaps-sm" style={{ color: 'var(--bone-dim)' }}>kalendarium · aprilis</div>
+          <div className="mono" style={{ fontSize: 9, color: 'var(--ash)' }}>3 / 30</div>
+        </div>
+        <div className="rule-dim" />
+
+        {/* week-day ribbon */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, padding: '14px 0 6px' }}>
+          {['L','M','M','J','V','S','D'].map((d, i) => (
+            <div key={i} className="mono" style={{ fontSize: 8, color: 'var(--ash)', textAlign: 'center' }}>{d}</div>
+          ))}
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
+          {/* 2 empty cells for Apr 1 = Wednesday offset (not accurate to calendar, ritual approximation) */}
+          {[...Array(2)].map((_, i) => <div key={`e${i}`} style={{ aspectRatio: 1 }} />)}
+          {days.map((d) => (
+            <div key={d.d} style={{
+              aspectRatio: 1,
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: d.today ? '1px solid var(--ember)' : 'none',
+            }}>
+              {d.worked ? (
+                <div style={{
+                  position: 'absolute',
+                  inset: '22%',
+                  background: 'var(--ember)',
+                  opacity: 0.9,
+                }} />
+              ) : null}
+              <div className="mono" style={{
+                fontSize: 9,
+                position: 'relative',
+                zIndex: 1,
+                color: d.worked ? 'var(--bone)' : d.today ? 'var(--ember)' : 'var(--bone-ghost)',
+                fontWeight: d.today ? 500 : 300,
+              }}>{d.d}</div>
+            </div>
+          ))}
+        </div>
+        <div className="script" style={{ textAlign: 'center', padding: '16px 40px 0', fontSize: 11, color: 'var(--ash)', fontStyle: 'italic' }}>
+          three offerings · twenty-seven abstentions
+        </div>
+      </div>
+
+      {/* ═══════════════ VII. PERSONAL RECORDS — SIGIL TABLETS ═══════════════ */}
+      <div className="rise rise-5" style={{ padding: '56px 24px 0' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 14 }}>
+          <div className="kaps-sm" style={{ color: 'var(--bone-dim)' }}>sigilla · records</div>
+          <div className="mono" style={{ fontSize: 9, color: 'var(--ash)' }}>4 · RECORDS</div>
+        </div>
+        <div className="rule-dim" />
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 16 }}>
+          {prs.map((pr, i) => <Tablet key={pr.name} pr={pr} />)}
+        </div>
+      </div>
+
+      {/* ═══════════════ VIII. HISTORY — PROCESSION ═══════════════ */}
+      <div className="rise rise-6" style={{ padding: '56px 0 0' }}>
+        <div style={{ padding: '0 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
+          <div className="kaps-sm" style={{ color: 'var(--bone-dim)' }}>chronicon</div>
+          <div className="mono" style={{ fontSize: 9, color: 'var(--ash)' }}>3 · ENTRIES</div>
+        </div>
+        <div className="rule-dim" style={{ margin: '0 24px' }} />
+
+        <div style={{ padding: '8px 0' }}>
+          {[...history].reverse().map((h, i) => (
+            <div
+              key={h.n}
+              className="press"
+              onClick={() => onOpen('history')}
+              style={{
+                padding: '18px 24px',
+                display: 'grid',
+                gridTemplateColumns: 'auto 1fr auto auto',
+                gap: 14,
+                alignItems: 'center',
+                borderBottom: i < history.length - 1 ? '1px solid var(--bone-ghost)' : 'none',
+              }}
+            >
+              <div style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 500, fontSize: 24, color: 'var(--bone)', width: 28 }}>
+                {String(h.n).padStart(2, '0')}
+              </div>
+              <div>
+                <div className="script" style={{ fontSize: 14, color: 'var(--bone)', fontStyle: 'italic' }}>{h.label}</div>
+                <div className="mono" style={{ fontSize: 9, color: 'var(--ash)', marginTop: 2, letterSpacing: '0.15em' }}>{h.date}</div>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div className="mono" style={{ fontSize: 13, color: 'var(--bone)' }}>{h.total}</div>
+                <div className="mono" style={{ fontSize: 7.5, color: 'var(--ash)', marginTop: 2, letterSpacing: '0.2em' }}>KG·LIFTED</div>
+              </div>
+              <div style={{ width: 3, height: 38, background: 'var(--ember)', opacity: h.ember }} />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ═══════════════ IX. LITANY / FOOTER ═══════════════ */}
+      <div className="rise rise-6" style={{ padding: '72px 24px 40px', textAlign: 'center' }}>
+        <div className="cross-sm" style={{ color: 'var(--bone-dim)', display: 'inline-block' }} />
+        <div className="script" style={{ fontSize: 12, color: 'var(--ash)', marginTop: 16, lineHeight: 1.7, fontStyle: 'italic' }}>
+          the iron doth not forget.<br/>
+          the iron doth not forgive.<br/>
+          the iron remembereth all.
+        </div>
+        <div className="mono" style={{ fontSize: 8, color: 'var(--bone-ghost)', marginTop: 22, letterSpacing: '0.3em' }}>
+          MYGYM · MMXXVI
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ──────────── muscle legend row ────────────
+function LegendRow({ name, ru, v, align = 'right' }) {
+  const opacity = 0.25 + v * 0.75;
+  return (
+    <div style={{
+      marginBottom: 14,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: align === 'right' ? 'flex-end' : 'flex-start',
+    }}>
+      <div className="kaps-sm" style={{ color: 'var(--bone)', opacity, fontSize: 9 }}>{name}</div>
+      <div style={{
+        marginTop: 4,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 6,
+        flexDirection: align === 'right' ? 'row' : 'row-reverse',
+      }}>
+        <div className="script" style={{ fontSize: 10, color: 'var(--ash)', fontStyle: 'italic' }}>{ru}</div>
+        <div style={{
+          width: 18,
+          height: 4,
+          background: v > 0 ? `rgba(139,30,30,${0.2 + v * 0.8})` : 'rgba(232,228,218,0.08)',
+        }} />
+      </div>
+    </div>
+  );
+}
+
+// ──────────── PR tablet ────────────
+function Tablet({ pr }) {
+  return (
+    <div style={{
+      position: 'relative',
+      padding: '16px 14px',
+      border: '1px solid var(--bone-faint)',
+      textAlign: 'center',
+    }}>
+      {/* corner nails */}
+      <div style={{ position: 'absolute', top: 3, left: 3, width: 2, height: 2, background: 'var(--bone)' }} />
+      <div style={{ position: 'absolute', top: 3, right: 3, width: 2, height: 2, background: 'var(--bone)' }} />
+      <div style={{ position: 'absolute', bottom: 3, left: 3, width: 2, height: 2, background: 'var(--bone)' }} />
+      <div style={{ position: 'absolute', bottom: 3, right: 3, width: 2, height: 2, background: 'var(--bone)' }} />
+
+      <div className="kaps-sm" style={{ color: 'var(--ash)', fontSize: 8 }}>{pr.name}</div>
+      <div style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 500, fontSize: 44, lineHeight: 1, margin: '10px 0 4px', color: 'var(--bone)' }}>
+        {pr.value}
+      </div>
+      <div className="mono" style={{ fontSize: 8, color: 'var(--bone-dim)', letterSpacing: '0.25em' }}>{pr.unit}</div>
+      <div style={{ marginTop: 8, height: 1, background: 'var(--bone-ghost)' }} />
+      <div className="mono" style={{ fontSize: 8, color: 'var(--ember-dim)', marginTop: 8, letterSpacing: '0.2em' }}>
+        {pr.sets}
+      </div>
+    </div>
+  );
+}
+
+window.HomeScreen = HomeScreen;
+
+// Active.jsx — the rite in progress. Minimal, brutal, focused.
+
+function ActiveScreen({ onOpen }) {
+  const [exIdx, setExIdx] = React.useState(0);
+  const [sets, setSets] = React.useState({
+    0: [{ w: 30, r: 12, done: true }, { w: 30, r: 12, done: true }, { w: 30, r: 12, done: false }],
+    1: [{ w: 6, r: 12, done: false }, { w: 6, r: 12, done: false }, { w: 6, r: 12, done: false }],
+    2: [{ w: 3, r: 12, done: false }, { w: 3, r: 12, done: false }, { w: 3, r: 12, done: false }],
+  });
+  const [restTimer, setRestTimer] = React.useState(0);
+  const [timerOn, setTimerOn] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!timerOn) return;
+    const i = setInterval(() => setRestTimer((t) => t + 1), 1000);
+    return () => clearInterval(i);
+  }, [timerOn]);
+
+  const exercises = [
+    { name: 'Pressus Pectoris',  ru: 'жим штанги лёжа',   group: 'PECTUS',   target: '30', unit: 'КГ' },
+    { name: 'Tractus Superior',  ru: 'тяга верхнего блока', group: 'DORSUM', target: '6',  unit: 'ПЛ' },
+    { name: 'Tractus Horizon.',  ru: 'тяга горизонт. блока', group: 'DORSUM', target: '3', unit: 'ПЛ' },
+  ];
+  const ex = exercises[exIdx];
+  const curSets = sets[exIdx];
+
+  const roman = (n) => String(n).padStart(2, '0');
+  const fmtTimer = (s) => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+
+  const update = (i, field, delta) => {
+    setSets((s) => ({
+      ...s,
+      [exIdx]: s[exIdx].map((x, j) => j === i ? { ...x, [field]: Math.max(0, x[field] + delta) } : x),
+    }));
+  };
+  const toggleDone = (i) => {
+    setSets((s) => ({
+      ...s,
+      [exIdx]: s[exIdx].map((x, j) => j === i ? { ...x, done: !x.done } : x),
+    }));
+    setRestTimer(0);
+    setTimerOn(true);
+  };
+
+  const progress = (exIdx + 1) / exercises.length;
+
+  return (
+    <div style={{ height: '100%', background: 'var(--void)', display: 'flex', flexDirection: 'column' }}>
+      {/* header */}
+      <div style={{ padding: '70px 20px 0', position: 'relative' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="press kaps-sm" onClick={() => onOpen('home')} style={{ color: 'var(--bone-dim)' }}>
+            ✕ · cease
+          </div>
+          <div className="mono" style={{ fontSize: 9, color: 'var(--ember)' }}>
+            <span className="ember-pulse">●</span> IN RITU
+          </div>
+          <div className="press kaps-sm" onClick={() => onOpen('home')} style={{ color: 'var(--bone)' }}>
+            end ·✓
+          </div>
+        </div>
+
+        {/* progress bar — carved */}
+        <div style={{ marginTop: 24, height: 2, background: 'var(--bone-ghost)', position: 'relative' }}>
+          <div style={{ position: 'absolute', inset: 0, width: `${progress * 100}%`, background: 'var(--ember)' }} />
+          {exercises.map((_, i) => (
+            <div key={i} style={{
+              position: 'absolute', left: `${((i + 1) / exercises.length) * 100}%`,
+              top: -3, width: 1, height: 8, background: 'var(--bone-faint)',
+            }} />
+          ))}
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
+          <div className="mono" style={{ fontSize: 9, color: 'var(--ash)' }}>EXERCISE {exIdx + 1}</div>
+          <div className="mono" style={{ fontSize: 9, color: 'var(--ash)' }}>OF {exercises.length}</div>
+        </div>
+      </div>
+
+      {/* exercise title */}
+      <div style={{ padding: '36px 24px 0', textAlign: 'center' }}>
+        <div className="kaps-sm" style={{ color: 'var(--ember)' }}>{ex.group}</div>
+        <div style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontWeight: 500, fontSize: 34, lineHeight: 1, marginTop: 10, color: 'var(--bone)' }}>
+          {ex.ru}
+        </div>
+        <div className="mono" style={{ fontSize: 10, color: 'var(--ash)', marginTop: 8, letterSpacing: '0.25em' }}>
+          {ex.name.toUpperCase()}
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 14, marginTop: 18, alignItems: 'center' }}>
+          <div style={{ height: 1, width: 20, background: 'var(--bone-faint)' }} />
+          <div className="mono" style={{ fontSize: 10, color: 'var(--bone-dim)', letterSpacing: '0.3em' }}>
+            TARGET · {ex.target}·{ex.unit}
+          </div>
+          <div style={{ height: 1, width: 20, background: 'var(--bone-faint)' }} />
+        </div>
+      </div>
+
+      {/* sets */}
+      <div style={{ padding: '32px 20px 0', flex: 1 }}>
+        {curSets.map((s, i) => (
+          <div key={i} style={{
+            padding: '16px 16px',
+            marginBottom: 10,
+            border: `1px solid ${s.done ? 'var(--ember-dim)' : 'var(--bone-faint)'}`,
+            background: s.done ? 'var(--ember-glow)' : 'transparent',
+            display: 'grid',
+            gridTemplateColumns: 'auto 1fr 1fr auto',
+            gap: 12,
+            alignItems: 'center',
+          }}>
+            <div style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 500, fontSize: 20, color: s.done ? 'var(--ember)' : 'var(--bone)', width: 26, textAlign: 'center' }}>
+              {i + 1}
+            </div>
+            <Stepper label="WEIGHT" value={s.w} unit={ex.unit} onDec={() => update(i, 'w', -2.5)} onInc={() => update(i, 'w', 2.5)} />
+            <Stepper label="REPS"   value={s.r} unit="×"       onDec={() => update(i, 'r', -1)}   onInc={() => update(i, 'r', 1)} />
+            <div
+              className="press"
+              onClick={() => toggleDone(i)}
+              style={{
+                width: 34, height: 34,
+                border: `1px solid ${s.done ? 'var(--ember)' : 'var(--bone)'}`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: s.done ? 'var(--ember)' : 'var(--bone)',
+              }}
+            >
+              {s.done ? <span style={{ color: 'var(--ember)', fontSize: 18 }}>✓</span> : <span className="cross-sm" />}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* rest timer */}
+      <div
+        className="press"
+        onClick={() => { setTimerOn(!timerOn); if (timerOn) setRestTimer(0); }}
+        style={{
+          margin: '0 20px 14px',
+          padding: '14px',
+          border: `1px solid ${timerOn ? 'var(--ember)' : 'var(--bone-faint)'}`,
+          textAlign: 'center',
+        }}
+      >
+        <div className="kaps-sm" style={{ color: timerOn ? 'var(--ember)' : 'var(--ash)' }}>
+          {timerOn ? 'silentium · rest' : 'begin rest'}
+        </div>
+        {timerOn ? (
+          <div className="mono" style={{ fontSize: 28, color: 'var(--ember)', marginTop: 6, letterSpacing: '0.15em' }}>
+            {fmtTimer(restTimer)}
+          </div>
+        ) : null}
+      </div>
+
+      {/* nav */}
+      <div style={{ padding: '0 20px 90px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        <div
+          className="press"
+          onClick={() => exIdx > 0 && setExIdx(exIdx - 1)}
+          style={{
+            padding: 16, textAlign: 'center',
+            border: '1px solid var(--bone-faint)',
+            color: exIdx > 0 ? 'var(--bone)' : 'var(--bone-ghost)',
+          }}
+        >
+          <span className="kaps-sm">← retro</span>
+        </div>
+        <div
+          className="press"
+          onClick={() => exIdx < exercises.length - 1 && setExIdx(exIdx + 1)}
+          style={{
+            padding: 16, textAlign: 'center',
+            border: `1px solid ${exIdx < exercises.length - 1 ? 'var(--bone)' : 'var(--bone-faint)'}`,
+            background: exIdx < exercises.length - 1 ? 'var(--bone)' : 'transparent',
+            color: exIdx < exercises.length - 1 ? 'var(--void)' : 'var(--bone-ghost)',
+          }}
+        >
+          <span className="kaps-sm">advance →</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Stepper({ label, value, unit, onDec, onInc }) {
+  return (
+    <div style={{ textAlign: 'center' }}>
+      <div className="kaps-sm" style={{ fontSize: 7, color: 'var(--ash)' }}>{label}</div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 4 }}>
+        <span className="press mono" onClick={onDec} style={{ color: 'var(--bone-dim)', fontSize: 16, width: 18 }}>−</span>
+        <span className="mono" style={{ fontSize: 17, color: 'var(--bone)', minWidth: 34 }}>{value}</span>
+        <span className="press mono" onClick={onInc} style={{ color: 'var(--bone-dim)', fontSize: 16, width: 18 }}>+</span>
+      </div>
+      <div className="mono" style={{ fontSize: 7, color: 'var(--ash)', marginTop: 2, letterSpacing: '0.2em' }}>{unit}</div>
+    </div>
+  );
+}
+
+window.ActiveScreen = ActiveScreen;
+
+// History + placeholder screens
+function HistoryScreen({ onOpen }) {
+  const entries = [
+    { n: 3, date: '11 APR 2026', label: 'training the third',  weight: 3250, ex: 7, status: 'COMPLETE' },
+    { n: 2, date: '07 APR 2026', label: 'training the second', weight: 2880, ex: 7, status: 'COMPLETE' },
+    { n: 1, date: '01 APR 2026', label: 'training the first',  weight: 2340, ex: 7, status: 'COMPLETE' },
+  ];
+  const roman = (n) => ['I','II','III','IV','V','VI','VII'][n - 1] || String(n);
+  return (
+    <div className="ritual-scroll" style={{ height: '100%', overflowY: 'auto', paddingBottom: 100 }}>
+      <div style={{ padding: '70px 24px 0' }}>
+        <div className="kaps-sm" style={{ color: 'var(--bone-dim)' }}>chronicon · omnia</div>
+        <div className="fraktur" style={{ fontSize: 54, lineHeight: 1, marginTop: 12, color: 'var(--bone)' }}>Chronicle</div>
+        <div style={{ margin: '14px 0 0', width: 32, height: 1, background: 'var(--bone)' }} />
+        <div className="script" style={{ fontSize: 13, color: 'var(--ash)', marginTop: 14, fontStyle: 'italic' }}>
+          — every offering, inscribed in iron and shadow
+        </div>
+      </div>
+
+      <div style={{ padding: '36px 0 0' }}>
+        {entries.map((e) => (
+          <div key={e.n} className="press" onClick={() => onOpen('home')} style={{
+            padding: '22px 24px',
+            borderTop: '1px solid var(--bone-ghost)',
+            display: 'grid',
+            gridTemplateColumns: 'auto 1fr',
+            gap: 18,
+            alignItems: 'center',
+          }}>
+            <div style={{ textAlign: 'center', width: 50 }}>
+              <div style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 500, fontSize: 32, color: 'var(--bone)', lineHeight: 0.9 }}>{String(e.n).padStart(2, '0')}</div>
+              <div className="mono" style={{ fontSize: 8, color: 'var(--ash)', marginTop: 4, letterSpacing: '0.1em' }}>{e.date}</div>
+            </div>
+            <div>
+              <div className="script" style={{ fontSize: 16, color: 'var(--bone)', fontStyle: 'italic' }}>{e.label}</div>
+              <div style={{ display: 'flex', gap: 18, marginTop: 8 }}>
+                <div>
+                  <div className="mono" style={{ fontSize: 15, color: 'var(--bone)' }}>{e.weight}</div>
+                  <div className="mono" style={{ fontSize: 7, color: 'var(--ash)', letterSpacing: '0.2em' }}>KG·LIFTED</div>
+                </div>
+                <div style={{ width: 1, background: 'var(--bone-ghost)' }} />
+                <div>
+                  <div className="mono" style={{ fontSize: 15, color: 'var(--bone)' }}>{e.ex}</div>
+                  <div className="mono" style={{ fontSize: 7, color: 'var(--ash)', letterSpacing: '0.2em' }}>EXERCISES</div>
+                </div>
+                <div style={{ flex: 1 }} />
+                <div className="mono ember" style={{ fontSize: 8, alignSelf: 'center' }}>{e.status}</div>
+              </div>
+            </div>
+          </div>
+        ))}
+        <div style={{ borderTop: '1px solid var(--bone-ghost)' }} />
+      </div>
+
+      <div style={{ padding: '48px 24px 0', textAlign: 'center' }}>
+        <span className="cross-sm" style={{ color: 'var(--bone-dim)', display: 'inline-block' }} />
+        <div className="script" style={{ fontSize: 11, color: 'var(--ash)', marginTop: 12, fontStyle: 'italic' }}>
+          here endeth the chronicle
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProgressScreen({ onOpen }) {
+  return (
+    <div className="ritual-scroll" style={{ height: '100%', overflowY: 'auto', paddingBottom: 100, padding: '70px 24px 100px' }}>
+      <div className="kaps-sm" style={{ color: 'var(--bone-dim)' }}>progressus · iron</div>
+      <div className="fraktur" style={{ fontSize: 54, lineHeight: 1, marginTop: 12, color: 'var(--bone)' }}>Ascent</div>
+      <div style={{ margin: '14px 0 0', width: 32, height: 1, background: 'var(--bone)' }} />
+
+      {/* bench chart */}
+      <div style={{ marginTop: 36 }}>
+        <div className="kaps-sm" style={{ color: 'var(--ember)' }}>pressus pectoris</div>
+        <div className="script" style={{ fontSize: 14, color: 'var(--bone)', fontStyle: 'italic', marginTop: 4 }}>the supine press</div>
+
+        {/* chart */}
+        <div style={{ position: 'relative', height: 180, marginTop: 28, borderLeft: '1px solid var(--bone-faint)', borderBottom: '1px solid var(--bone-faint)' }}>
+          {/* y-axis ticks */}
+          {[0, 0.33, 0.66, 1].map((t, i) => (
+            <div key={i} style={{ position: 'absolute', left: -28, top: `${(1 - t) * 100}%`, fontSize: 9 }} className="mono">
+              <span style={{ color: 'var(--ash)' }}>{[20, 25, 28, 30][i]}</span>
+            </div>
+          ))}
+          {/* grid lines */}
+          {[0.33, 0.66].map((t, i) => (
+            <div key={i} style={{ position: 'absolute', left: 0, right: 0, top: `${(1 - t) * 100}%`, height: 0, borderTop: '1px dashed rgba(232,228,218,0.08)' }} />
+          ))}
+          {/* points — x: 3 data points across, y: 20, 30, 30 */}
+          {(() => {
+            const data = [{x: 0.05, y: 0, label: '1'}, {x: 0.5, y: 1, label: '2'}, {x: 0.95, y: 1, label: '3'}];
+            return (
+              <>
+                {data.slice(0, -1).map((p, i) => {
+                  const n = data[i+1];
+                  return (
+                    <svg key={i} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
+                      <line x1={`${p.x*100}%`} y1={`${(1-p.y)*100}%`} x2={`${n.x*100}%`} y2={`${(1-n.y)*100}%`} stroke="var(--ember)" strokeWidth="1" />
+                    </svg>
+                  );
+                })}
+                {data.map((p, i) => (
+                  <div key={i} style={{
+                    position: 'absolute', left: `${p.x*100}%`, top: `${(1-p.y)*100}%`,
+                    transform: 'translate(-50%, -50%)', width: 8, height: 8,
+                    background: 'var(--ember)', border: '1px solid var(--bone)',
+                  }} />
+                ))}
+                {data.map((p, i) => (
+                  <div key={`l${i}`} className="mono" style={{
+                    position: 'absolute', left: `${p.x*100}%`, bottom: -20,
+                    transform: 'translateX(-50%)', fontSize: 9, color: 'var(--ash)',
+                  }}>{p.label}</div>
+                ))}
+              </>
+            );
+          })()}
+        </div>
+
+        {/* stats under chart */}
+        <div style={{ marginTop: 34, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0, border: '1px solid var(--bone-faint)' }}>
+          {[
+            { l: 'START',    v: '20', u: 'KG' },
+            { l: 'PEAK',     v: '30', u: 'KG' },
+            { l: 'DELTA',    v: '+10', u: 'KG' },
+            { l: 'SESSIONS', v: '3', u: '' },
+          ].map((s, i) => (
+            <div key={i} style={{
+              padding: 16, textAlign: 'center',
+              borderRight: i % 2 === 0 ? '1px solid var(--bone-faint)' : 'none',
+              borderBottom: i < 2 ? '1px solid var(--bone-faint)' : 'none',
+            }}>
+              <div className="kaps-sm" style={{ fontSize: 7, color: 'var(--ash)' }}>{s.l}</div>
+              <div style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 500, fontSize: 28, color: 'var(--bone)', marginTop: 6 }}>{s.v}</div>
+              {s.u ? <div className="mono" style={{ fontSize: 7, color: 'var(--ash)', letterSpacing: '0.2em', marginTop: 2 }}>{s.u}</div> : null}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ marginTop: 40, textAlign: 'center' }}>
+        <span className="cross-sm" style={{ color: 'var(--bone-dim)', display: 'inline-block' }} />
+        <div className="script" style={{ fontSize: 11, color: 'var(--ash)', marginTop: 12, fontStyle: 'italic' }}>
+          the ascent is slow. the ascent is certain.
+        </div>
+      </div>
+    </div>
+  );
+}
+
+window.HistoryScreen = HistoryScreen;
+window.ProgressScreen = ProgressScreen;
+
+// App.jsx — shell, tab bar, transitions, tweaks
+
+function TabBar({ tab, setTab }) {
+  const items = [
+    { id: 'home',     label: 'ALTARE',   fraktur: 'A' },
+    { id: 'history',  label: 'CHRONICON', fraktur: 'C' },
+    { id: 'progress', label: 'ASCENSUS', fraktur: 'E' },
+  ];
+  return (
+    <div style={{
+      position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 30,
+      background: 'linear-gradient(to top, var(--void) 60%, transparent)',
+      paddingTop: 20, paddingBottom: 28,
+    }}>
+      <div style={{
+        margin: '0 20px',
+        borderTop: '1px solid var(--bone-faint)',
+        display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
+      }}>
+        {items.map((it) => {
+          const active = tab === it.id;
+          return (
+            <div
+              key={it.id}
+              className="press"
+              onClick={() => setTab(it.id)}
+              style={{
+                padding: '14px 8px 8px', textAlign: 'center',
+                borderRight: it.id !== 'progress' ? '1px solid var(--bone-ghost)' : 'none',
+                position: 'relative',
+              }}
+            >
+              {active && (
+                <div style={{
+                  position: 'absolute', top: -1, left: '30%', right: '30%',
+                  height: 1, background: 'var(--ember)',
+                }} />
+              )}
+              <div className="kaps-sm" style={{
+                color: active ? 'var(--bone)' : 'var(--ash)',
+                fontSize: 8,
+              }}>{it.label}</div>
+              {active && (
+                <div style={{ marginTop: 6, fontSize: 4 }}>
+                  <span className="cross-sm" style={{ color: 'var(--ember)', display: 'inline-block' }} />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const [tab, setTab] = React.useState(() => {
+    try { return localStorage.getItem('mygym_tab') || 'home'; } catch { return 'home'; }
+  });
+  const [screen, setScreen] = React.useState(() => {
+    try { return localStorage.getItem('mygym_screen') || 'home'; } catch { return 'home'; }
+  });
+
+  React.useEffect(() => {
+    try { localStorage.setItem('mygym_tab', tab); } catch {}
+  }, [tab]);
+  React.useEffect(() => {
+    try { localStorage.setItem('mygym_screen', screen); } catch {}
+  }, [screen]);
+
+  const open = (s) => {
+    if (s === 'active') {
+      setScreen('active');
+    } else if (s === 'history') {
+      setTab('history');
+      setScreen('home');
+    } else if (s === 'home') {
+      setScreen('home');
+      setTab('home');
+    }
+  };
+
+  const onTab = (t) => {
+    setTab(t);
+    setScreen('home');
+  };
+
+  const [key, setKey] = React.useState(0);
+  React.useEffect(() => { setKey(k => k + 1); }, [tab, screen]);
+
+  const renderContent = () => {
+    if (screen === 'active') return <ActiveScreen onOpen={open} />;
+    if (tab === 'history') return <HistoryScreen onOpen={open} />;
+    if (tab === 'progress') return <ProgressScreen onOpen={open} />;
+    return <HomeScreen onOpen={open} />;
+  };
+
+  return (
+    <IOSDevice dark width={390} height={844}>
+      <div className="ritual-root" style={{ height: '100%', position: 'relative' }}>
+        <div className="ritual-grain" />
+        <div key={key} style={{ position: 'absolute', inset: 0 }}>
+          {renderContent()}
+        </div>
+        {screen !== 'active' && <TabBar tab={tab} setTab={onTab} />}
+      </div>
+    </IOSDevice>
+  );
+}
+
+window.App = App;
+
+function Mount() {
+  const [ready, setReady] = React.useState(false);
+  React.useEffect(() => {
+    // wait for fonts
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => setReady(true));
+      setTimeout(() => setReady(true), 1500);
+    } else {
+      setTimeout(() => setReady(true), 400);
+    }
+  }, []);
+
+  return (
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '30px 10px',
+      background: '#050505',
+      backgroundImage: `radial-gradient(ellipse at center, #0a0808 0%, #000 70%)`,
+    }}>
+      <div style={{ opacity: ready ? 1 : 0, transition: 'opacity 0.6s' }}>
+        <App />
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<Mount />);
+
+</script>
+</body>
+</html>
