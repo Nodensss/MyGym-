@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Download } from 'lucide-react';
+import { Bot, Download } from 'lucide-react';
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { exportUrl } from '@/lib/api';
+import { aiExportUrl, exportUrl } from '@/lib/api';
 import { formatShortDate } from '@/lib/format';
 import { DEFAULT_PROGRAM } from '@/lib/program';
 import type { Workout } from '@/lib/types';
@@ -30,17 +30,27 @@ function StatCard({ label, value, color = 'slate' }: StatCardProps) {
 
 export default function ProgressTab({ history }: ProgressTabProps) {
   const [selectedEx, setSelectedEx] = useState('bench');
+  const exercise = DEFAULT_PROGRAM.exercises.find((item) => item.id === selectedEx) ?? DEFAULT_PROGRAM.exercises[0];
+  const metricKey = exercise.noWeight ? 'reps' : 'weight';
+  const metricLabel = exercise.noWeight ? 'Повторы за тренировку' : 'Макс. вес';
+  const recordLabel = exercise.noWeight ? 'Рекорд повторов' : 'Рекорд';
+  const progressUnit = exercise.noWeight ? ' раз' : '';
 
   const data = history.map((workout) => {
     const sets = workout.sets[selectedEx];
-    const maxWeight = sets ? Math.max(...sets.map((set) => Number(set.w) || 0), 0) : 0;
-    return { date: formatShortDate(workout.date), weight: maxWeight, label: workout.label };
+    const value = exercise.noWeight
+      ? sets?.reduce((sum, set) => sum + (Number(set.r) || 0), 0) ?? 0
+      : sets
+        ? Math.max(...sets.map((set) => Number(set.w) || 0), 0)
+        : 0;
+
+    return { date: formatShortDate(workout.date), value, label: workout.label };
   });
 
-  const exercise = DEFAULT_PROGRAM.exercises.find((item) => item.id === selectedEx);
-  const firstWeight = data[0]?.weight ?? 0;
-  const lastWeight = data[data.length - 1]?.weight ?? 0;
-  const progress = data.length > 1 ? lastWeight - firstWeight : null;
+  const firstValue = data[0]?.value ?? 0;
+  const lastValue = data[data.length - 1]?.value ?? 0;
+  const progress = data.length > 1 ? lastValue - firstValue : null;
+  const record = Math.max(...data.map((item) => item.value), 0);
 
   return (
     <div className="p-4 pt-6">
@@ -63,8 +73,8 @@ export default function ProgressTab({ history }: ProgressTabProps) {
 
       <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4">
         <div className="mb-3">
-          <div className="text-xs uppercase tracking-widest text-slate-500">Макс. вес</div>
-          <div className="text-xl font-bold">{exercise?.name}</div>
+          <div className="text-xs uppercase tracking-widest text-slate-500">{metricLabel}</div>
+          <div className="text-xl font-bold">{exercise.name}</div>
         </div>
         <div className="h-56">
           <ResponsiveContainer width="100%" height="100%">
@@ -75,10 +85,12 @@ export default function ProgressTab({ history }: ProgressTabProps) {
               <Tooltip
                 contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: '8px' }}
                 labelStyle={{ color: '#f97316' }}
+                formatter={(value) => [`${value}${exercise.noWeight ? ' раз' : ` ${exercise.unit}`}`, metricLabel]}
               />
               <Line
                 type="monotone"
-                dataKey="weight"
+                dataKey="value"
+                name={metricKey}
                 stroke="#f97316"
                 strokeWidth={2.5}
                 dot={{ fill: '#f97316', r: 5 }}
@@ -92,20 +104,32 @@ export default function ProgressTab({ history }: ProgressTabProps) {
       <div className="mt-4 grid grid-cols-2 gap-2">
         <StatCard label="Всего тренировок" value={history.length} />
         <StatCard label="Дней занятий" value={new Set(history.map((workout) => workout.date)).size} />
-        <StatCard label="Рекорд" value={Math.max(...data.map((item) => item.weight), 0)} color="orange" />
-        <StatCard label="Прогресс" value={progress !== null ? `${progress >= 0 ? '+' : ''}${progress}` : '—'} color="green" />
+        <StatCard label={recordLabel} value={`${record}${progressUnit}`} color="orange" />
+        <StatCard label="Прогресс" value={progress !== null ? `${progress >= 0 ? '+' : ''}${progress}${progressUnit}` : '—'} color="green" />
       </div>
 
-      <button
-        type="button"
-        onClick={() => {
-          window.location.href = exportUrl();
-        }}
-        className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-orange-500/40 bg-orange-500/10 p-3 text-sm font-bold uppercase tracking-wider text-orange-300 transition-colors hover:bg-orange-500/20"
-      >
-        <Download size={16} />
-        Экспорт CSV
-      </button>
+      <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <button
+          type="button"
+          onClick={() => {
+            window.location.href = exportUrl();
+          }}
+          className="flex w-full items-center justify-center gap-2 rounded-xl border border-orange-500/40 bg-orange-500/10 p-3 text-sm font-bold uppercase tracking-wider text-orange-300 transition-colors hover:bg-orange-500/20"
+        >
+          <Download size={16} />
+          Экспорт CSV
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            window.location.href = aiExportUrl();
+          }}
+          className="flex w-full items-center justify-center gap-2 rounded-xl border border-green-500/40 bg-green-500/10 p-3 text-sm font-bold uppercase tracking-wider text-green-300 transition-colors hover:bg-green-500/20"
+        >
+          <Bot size={16} />
+          Для Claude
+        </button>
+      </div>
     </div>
   );
 }

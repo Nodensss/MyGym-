@@ -66,3 +66,7 @@ export async function clearActive() {
 export function exportUrl() {
   return '/api/export';
 }
+
+export function aiExportUrl() {
+  return '/api/export?format=ai';
+}
