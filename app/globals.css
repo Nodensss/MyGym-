@@ -58,3 +58,181 @@ textarea {
   background: #334155;
   border-radius: 999px;
 }
+
+/* ════════════════════════════════════════════════════════════
+   RITUAL THEME — Mournful Congregation
+   Scoped under .ritual-theme so it does not leak into default.
+   ════════════════════════════════════════════════════════════ */
+.ritual-theme {
+  --void: #000000;
+  --bone: #E8E4DA;
+  --bone-dim: rgba(232, 228, 218, 0.55);
+  --bone-faint: rgba(232, 228, 218, 0.22);
+  --bone-ghost: rgba(232, 228, 218, 0.08);
+  --ash: #6B6560;
+  --ember: #8B1E1E;
+  --ember-dim: rgba(139, 30, 30, 0.6);
+  --ember-glow: rgba(139, 30, 30, 0.14);
+
+  --fraktur: var(--font-unifraktur), 'UnifrakturMaguntia', serif;
+  --serif: var(--font-cormorant), 'Cormorant Garamond', serif;
+  --mono: var(--font-jetbrains), 'JetBrains Mono', ui-monospace, monospace;
+
+  background: var(--void);
+  color: var(--bone);
+  font-family: var(--serif);
+  font-weight: 300;
+  letter-spacing: 0.01em;
+  min-height: 100dvh;
+  position: relative;
+  isolation: isolate;
+}
+
+.ritual-theme .ritual-grain {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.06;
+  mix-blend-mode: screen;
+  z-index: 40;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.85 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
+
+.ritual-theme .fraktur {
+  font-family: var(--fraktur);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  line-height: 0.95;
+}
+
+.ritual-theme .script {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 300;
+  letter-spacing: 0.02em;
+}
+
+.ritual-theme .mono {
+  font-family: var(--mono);
+  font-weight: 300;
+  letter-spacing: 0.04em;
+}
+
+.ritual-theme .kaps {
+  font-family: var(--serif);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.32em;
+  font-size: 10px;
+}
+
+.ritual-theme .kaps-sm {
+  font-family: var(--serif);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.42em;
+  font-size: 8.5px;
+}
+
+.ritual-theme .rule {
+  height: 1px;
+  background: var(--bone-faint);
+  width: 100%;
+}
+
+.ritual-theme .rule-dim {
+  height: 1px;
+  background: var(--bone-ghost);
+  width: 100%;
+}
+
+.ritual-theme .cross-sm {
+  width: 6px;
+  height: 6px;
+  position: relative;
+  display: inline-block;
+}
+.ritual-theme .cross-sm::before,
+.ritual-theme .cross-sm::after {
+  content: '';
+  position: absolute;
+  background: currentColor;
+}
+.ritual-theme .cross-sm::before {
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  transform: translateX(-50%);
+}
+.ritual-theme .cross-sm::after {
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  transform: translateY(-50%);
+}
+
+.ritual-theme .ember {
+  color: var(--ember);
+}
+
+.ritual-theme .ritual-scroll::-webkit-scrollbar {
+  display: none;
+}
+.ritual-theme .ritual-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+@keyframes ritualRiseFromVoid {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+    filter: blur(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+.ritual-theme .rise {
+  animation: ritualRiseFromVoid 1.2s cubic-bezier(0.2, 0, 0.15, 1) both;
+}
+.ritual-theme .rise-2 {
+  animation-delay: 0.18s;
+}
+.ritual-theme .rise-3 {
+  animation-delay: 0.34s;
+}
+.ritual-theme .rise-4 {
+  animation-delay: 0.5s;
+}
+.ritual-theme .rise-5 {
+  animation-delay: 0.66s;
+}
+.ritual-theme .rise-6 {
+  animation-delay: 0.82s;
+}
+
+@keyframes ritualEmberPulse {
+  0%,
+  100% {
+    opacity: 0.85;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+.ritual-theme .ember-pulse {
+  animation: ritualEmberPulse 3.4s ease-in-out infinite;
+}
+
+.ritual-theme .press {
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.ritual-theme .press:active {
+  opacity: 0.5;
+}

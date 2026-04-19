@@ -17,7 +17,13 @@ import BottomNav from '@/components/BottomNav';
 import HistoryTab from '@/components/HistoryTab';
 import HomeTab from '@/components/HomeTab';
 import ProgressTab from '@/components/ProgressTab';
+import ThemeToggle from '@/components/ThemeToggle';
 import WorkoutDetail from '@/components/WorkoutDetail';
+import RitualHistory from '@/components/ritual/RitualHistory';
+import RitualHome from '@/components/ritual/RitualHome';
+import RitualProgress from '@/components/ritual/RitualProgress';
+import RitualTabBar from '@/components/ritual/RitualTabBar';
+import { useTheme } from '@/lib/theme-context';
 
 const HISTORY_CACHE_KEY = 'slavik_gym_history_cache';
 const ACTIVE_CACHE_KEY = 'slavik_gym_active_cache';
@@ -71,6 +77,7 @@ function stripActiveFields(workout: Workout): Workout {
 }
 
 export default function WorkoutApp() {
+  const { theme } = useTheme();
   const [tab, setTab] = useState<TabId>('home');
   const [history, setHistory] = useState<Workout[]>([]);
   const [loading, setLoading] = useState(true);
@@ -288,6 +295,7 @@ export default function WorkoutApp() {
           history={history}
           saveStatus={saveStatus}
         />
+        <ThemeToggle />
         {toast ? <Toast message={toast} /> : null}
       </>
     );
@@ -301,8 +309,33 @@ export default function WorkoutApp() {
           onBack={() => setViewingWorkout(null)}
           onDelete={() => deleteWorkout(viewingWorkout.id)}
         />
+        <ThemeToggle />
         {toast ? <Toast message={toast} /> : null}
       </>
+    );
+  }
+
+  if (theme === 'ritual') {
+    return (
+      <div className="ritual-theme">
+        <div className="ritual-grain" />
+        <div style={{ maxWidth: 460, margin: '0 auto' }}>
+          {tab === 'home' ? (
+            <RitualHome
+              history={history}
+              activeWorkout={activeWorkout}
+              onStart={startNewWorkout}
+              onContinue={continueWorkout}
+              onView={setViewingWorkout}
+            />
+          ) : null}
+          {tab === 'history' ? <RitualHistory history={history} onView={setViewingWorkout} /> : null}
+          {tab === 'progress' ? <RitualProgress history={history} /> : null}
+        </div>
+        <RitualTabBar tab={tab} setTab={setTab} />
+        <ThemeToggle />
+        {toast ? <Toast message={toast} /> : null}
+      </div>
     );
   }
 
@@ -328,6 +361,7 @@ export default function WorkoutApp() {
         {tab === 'progress' ? <ProgressTab history={history} /> : null}
       </div>
       <BottomNav tab={tab} setTab={setTab} />
+      <ThemeToggle />
       {toast ? <Toast message={toast} /> : null}
     </div>
   );
