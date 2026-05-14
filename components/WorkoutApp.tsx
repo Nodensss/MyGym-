@@ -21,6 +21,7 @@ import WorkoutDetail from '@/components/WorkoutDetail';
 
 const HISTORY_CACHE_KEY = 'slavik_gym_history_cache';
 const ACTIVE_CACHE_KEY = 'slavik_gym_active_cache';
+const PENDING_QUEUE_KEY = 'slavik_gym_pending_workouts';
 
 type SaveStatus = '' | 'saved' | 'error';
 
@@ -70,6 +71,27 @@ function stripActiveFields(workout: Workout): Workout {
   return cleaned;
 }
 
+function readQueue(): Workout[] {
+  return readJson<Workout[]>(PENDING_QUEUE_KEY) ?? [];
+}
+
+function writeQueue(queue: Workout[]) {
+  if (queue.length === 0) removeJson(PENDING_QUEUE_KEY);
+  else writeJson(PENDING_QUEUE_KEY, queue);
+}
+
+function enqueuePending(workout: Workout) {
+  const queue = readQueue().filter((item) => item.id !== workout.id);
+  queue.push(workout);
+  writeQueue(queue);
+}
+
+function mergeWithPending(serverHistory: Workout[], pending: Workout[]) {
+  if (pending.length === 0) return serverHistory;
+  const seen = new Set(serverHistory.map((workout) => workout.id));
+  return [...serverHistory, ...pending.filter((workout) => !seen.has(workout.id))];
+}
+
 export default function WorkoutApp() {
   const [tab, setTab] = useState<TabId>('home');
   const [history, setHistory] = useState<Workout[]>([]);
@@ -92,12 +114,44 @@ export default function WorkoutApp() {
   useEffect(() => {
     let mounted = true;
 
+    async function flushPendingQueue(serverHistory: Workout[]): Promise<Workout[]> {
+      const pending = readQueue();
+      if (pending.length === 0) return serverHistory;
+
+      const remaining: Workout[] = [];
+      let flushed = 0;
+
+      for (const item of pending) {
+        try {
+          await createWorkout(item);
+          flushed += 1;
+        } catch {
+          remaining.push(item);
+        }
+      }
+
+      writeQueue(remaining);
+
+      if (flushed === 0) return mergeWithPending(serverHistory, remaining);
+
+      showToast(`Восстановлено офлайн-тренировок: ${flushed}`);
+      try {
+        const fresh = await fetchWorkouts();
+        return mergeWithPending(fresh, remaining);
+      } catch {
+        return mergeWithPending(serverHistory, remaining);
+      }
+    }
+
     async function load() {
       try {
         const [serverHistory, serverActive] = await Promise.all([fetchWorkouts(), fetchActive()]);
         if (!mounted) return;
 
-        const sorted = sortHistory(serverHistory);
+        const combined = await flushPendingQueue(serverHistory);
+        if (!mounted) return;
+
+        const sorted = sortHistory(combined);
         setHistory(sorted);
         writeJson(HISTORY_CACHE_KEY, sorted);
 
@@ -111,7 +165,8 @@ export default function WorkoutApp() {
         if (!mounted) return;
         const cachedHistory = readJson<Workout[]>(HISTORY_CACHE_KEY);
         const cachedActive = readJson<Workout>(ACTIVE_CACHE_KEY);
-        setHistory(sortHistory(cachedHistory?.length ? cachedHistory : INITIAL_HISTORY));
+        const base = cachedHistory?.length ? cachedHistory : INITIAL_HISTORY;
+        setHistory(sortHistory(mergeWithPending(base, readQueue())));
         if (cachedActive) setActiveWorkout(cachedActive);
         showToast('Нет связи с сервером, открыта локальная копия');
       } finally {
@@ -211,7 +266,7 @@ export default function WorkoutApp() {
 
     try {
       const saved = await createWorkout(cleaned);
-      updateHistory([...history, saved]);
+      updateHistory([...history.filter((item) => item.id !== cleaned.id), saved]);
       try {
         await clearActive();
       } catch {
@@ -219,9 +274,10 @@ export default function WorkoutApp() {
       }
       removeJson(ACTIVE_CACHE_KEY);
     } catch {
-      updateHistory([...history, cleaned]);
+      enqueuePending(cleaned);
+      updateHistory([...history.filter((item) => item.id !== cleaned.id), cleaned]);
       removeJson(ACTIVE_CACHE_KEY);
-      showToast('Сервер недоступен, тренировка сохранена локально');
+      showToast('Сервер недоступен — тренировка сохранена локально, отправим позже');
     }
 
     setActiveWorkout(null);
@@ -255,6 +311,7 @@ export default function WorkoutApp() {
 
   const deleteWorkout = async (id: string) => {
     if (id.startsWith('local-')) {
+      writeQueue(readQueue().filter((workout) => workout.id !== id));
       updateHistory(history.filter((workout) => workout.id !== id));
       setViewingWorkout(null);
       return;
