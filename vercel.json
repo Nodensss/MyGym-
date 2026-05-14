@@ -3,11 +3,5 @@
     "app/api/**/route.ts": {
       "maxDuration": 30
     }
-  },
-  "crons": [
-    {
-      "path": "/api/ping",
-      "schedule": "0 * * * *"
-    }
-  ]
+  }
 }
