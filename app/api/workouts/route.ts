@@ -19,8 +19,27 @@ function includeSets() {
   };
 }
 
+// One-shot self-healing migration: workout #11 was saved with the wrong
+// date (2026-05-14) due to the cold-start save failure. Once the date is
+// already 2026-05-11 this is a single indexed read and no-op.
+async function ensureWorkout11Date() {
+  try {
+    const w11 = await prisma.workout.findFirst({ where: { number: 11 } });
+    if (!w11) return;
+    if (w11.date.toISOString().slice(0, 10) === '2026-05-11') return;
+    await prisma.workout.update({
+      where: { id: w11.id },
+      data: { date: new Date('2026-05-11T00:00:00.000Z') }
+    });
+  } catch {
+    // Migration must never break the main GET response.
+  }
+}
+
 export async function GET() {
   try {
+    await ensureWorkout11Date();
+
     const workouts = await prisma.workout.findMany({
       orderBy: [{ date: 'asc' }, { number: 'asc' }],
       include: includeSets()
